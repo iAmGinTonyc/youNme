@@ -125,10 +125,16 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
           </div>
 
           <div className="datepicker-time">
-            <span className="time-label">Часы</span>
-            <ChipScroller options={HOURS} value={hour} onChange={changeHour} format={pad} />
-            <span className="time-label">Минуты</span>
-            <ChipScroller options={MINUTE_STEPS} value={minute} onChange={changeMinute} format={pad} />
+            <div className="time-columns">
+              <div className="time-column">
+                <span className="time-label">Часы</span>
+                <ChipScroller options={HOURS} value={hour} onChange={changeHour} format={pad} orientation="vertical" />
+              </div>
+              <div className="time-column">
+                <span className="time-label">Минуты</span>
+                <ChipScroller options={MINUTE_STEPS} value={minute} onChange={changeMinute} format={pad} orientation="vertical" />
+              </div>
+            </div>
             <button type="button" className="secondary datepicker-done" onClick={() => setOpen(false)}>
               Готово
             </button>

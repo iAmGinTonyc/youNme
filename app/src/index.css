@@ -286,17 +286,25 @@ input:focus, textarea:focus {
   border-top: 1px solid var(--hairline);
 }
 
+.time-columns {
+  display: flex;
+  gap: 12px;
+}
+
+.time-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .time-label {
   display: block;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ivory-dim);
-  margin-top: 4px;
-}
-
-.time-label:first-child {
-  margin-top: 0;
 }
 
 .datepicker-done {
@@ -374,6 +382,45 @@ input:focus, textarea:focus {
 
 .chip-arrow.left {
   left: 0;
+}
+
+.chip-scroller.vertical {
+  width: 100%;
+}
+
+.chip-row.vertical {
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 172px;
+  padding: 2px;
+}
+
+.chip.vertical {
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  font-size: 16px;
+}
+
+.chip-arrow.up,
+.chip-arrow.down {
+  top: auto;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 24px;
+}
+
+.chip-arrow.up {
+  top: 0;
+  background: linear-gradient(180deg, var(--panel) 55%, transparent);
+}
+
+.chip-arrow.down {
+  bottom: 0;
+  background: linear-gradient(0deg, var(--panel) 55%, transparent);
 }
 
 .checkbox-row {
