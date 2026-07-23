@@ -50,13 +50,13 @@ Deno.serve(async (req) => {
     }
 
     case "create_slot": {
-      const { starts_at, duration_minutes, location, note } = payload ?? {};
+      const { starts_at, duration_minutes, location, note, is_paid } = payload ?? {};
       if (!starts_at || !duration_minutes) {
         return json({ error: "starts_at and duration_minutes are required" }, 400);
       }
       const { data: slot, error } = await supabase
         .from("slots")
-        .insert({ master_id: masterId, starts_at, duration_minutes, location, note })
+        .insert({ master_id: masterId, starts_at, duration_minutes, location, note, is_paid: Boolean(is_paid) })
         .select()
         .single();
       if (error) return json({ error: error.message }, 500);

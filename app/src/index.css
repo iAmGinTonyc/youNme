@@ -306,3 +306,128 @@ input:focus, textarea:focus {
   margin-left: auto;
   margin-top: 0;
 }
+
+.duration-picker {
+  position: relative;
+}
+
+.duration-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 2px 1px;
+  scrollbar-width: none;
+}
+
+.duration-row::-webkit-scrollbar {
+  display: none;
+}
+
+.duration-chip {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--ivory);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.duration-chip:hover:not(.selected) {
+  border-color: var(--gold);
+}
+
+.duration-chip.selected {
+  background: linear-gradient(160deg, var(--gold-bright), var(--gold));
+  color: #1a1408;
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+.duration-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--panel) 40%, transparent);
+  color: var(--gold-bright);
+  border: none;
+  border-radius: 0;
+  z-index: 5;
+  font-size: 16px;
+}
+
+.duration-arrow.right {
+  right: 0;
+  background: linear-gradient(270deg, var(--panel) 40%, transparent);
+}
+
+.duration-arrow.left {
+  left: 0;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ivory);
+  cursor: pointer;
+}
+
+.checkbox-row input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 3px;
+  background: var(--ink);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.checkbox-row input[type="checkbox"]:checked {
+  background: linear-gradient(160deg, var(--gold-bright), var(--gold));
+  border-color: var(--gold);
+}
+
+.checkbox-row input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #1a1408;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.badge-paid {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 2px;
+  background: linear-gradient(160deg, var(--gold-bright), var(--gold));
+  color: #1a1408;
+  font-weight: 600;
+  margin-left: 6px;
+  margin-bottom: 8px;
+}

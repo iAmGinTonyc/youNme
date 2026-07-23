@@ -31,6 +31,7 @@ export interface Slot {
   location: string | null;
   note: string | null;
   status: SlotStatus;
+  is_paid: boolean;
   created_at: string;
   bookings?: Booking[];
   masters?: { name: string | null };
@@ -62,7 +63,7 @@ export function masterList(initData: string) {
 
 export function masterCreateSlot(
   initData: string,
-  payload: { starts_at: string; duration_minutes: number; location?: string; note?: string },
+  payload: { starts_at: string; duration_minutes: number; location?: string; note?: string; is_paid?: boolean },
 ) {
   if (import.meta.env.DEV && mockActive) return mockApi.masterCreateSlot(payload);
   return callFunction<{ slot: Slot }>("master", { initData, action: "create_slot", payload });

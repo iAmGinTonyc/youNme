@@ -49,6 +49,12 @@ Deno.serve(async (req) => {
       const { slot_id } = payload ?? {};
       if (!slot_id) return json({ error: "slot_id is required" }, 400);
 
+      // Paid slots aren't bookable yet — Stars checkout isn't wired up,
+      // so this is rejected server-side, not just hidden in the UI.
+      const { data: slotCheck } = await supabase.from("slots").select("is_paid").eq("id", slot_id).maybeSingle();
+      if (!slotCheck) return json({ error: "not_found" }, 404);
+      if (slotCheck.is_paid) return json({ error: "payment_required" }, 402);
+
       // Atomic claim: only succeeds if the slot is still open, so two
       // models racing for the same slot can't both win.
       const { data: claimed, error: claimError } = await supabase

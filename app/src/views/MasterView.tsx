@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { getInitData } from "../lib/telegram";
 import DateTimePicker from "../components/DateTimePicker";
+import DurationPicker from "../components/DurationPicker";
 import {
   Slot,
   masterCancelBooking,
@@ -31,6 +32,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
   const [duration, setDuration] = useState(60);
   const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
+  const [isPaid, setIsPaid] = useState(false);
 
   const initData = getInitData();
 
@@ -65,10 +67,12 @@ export default function MasterView({ identity }: { identity: { name: string } })
         duration_minutes: duration,
         location: location || undefined,
         note: note || undefined,
+        is_paid: isPaid,
       });
       setStartsAt("");
       setLocation("");
       setNote("");
+      setIsPaid(false);
     });
   }
 
@@ -79,15 +83,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
       <h2>Новый слот</h2>
       <form className="card" onSubmit={handleCreateSlot}>
         <DateTimePicker value={startsAt} onChange={setStartsAt} />
-        <input
-          type="number"
-          min={15}
-          step={15}
-          value={duration}
-          onChange={(e) => setDuration(Number(e.target.value))}
-          placeholder="Длительность, мин"
-          required
-        />
+        <DurationPicker value={duration} onChange={setDuration} />
         <input
           type="text"
           value={location}
@@ -100,6 +96,10 @@ export default function MasterView({ identity }: { identity: { name: string } })
           placeholder="Заметка (необязательно)"
           rows={2}
         />
+        <label className="checkbox-row">
+          <input type="checkbox" checked={isPaid} onChange={(e) => setIsPaid(e.target.checked)} />
+          Платная бронь
+        </label>
         <button type="submit" disabled={busy}>Создать слот</button>
       </form>
 
@@ -113,6 +113,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
         return (
           <div className="card" key={slot.id}>
             <span className="status">{STATUS_LABEL[slot.status]}</span>
+            {slot.is_paid && <span className="badge-paid">Платно</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
               {slot.duration_minutes} мин

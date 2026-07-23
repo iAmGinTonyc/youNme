@@ -70,15 +70,23 @@ export default function ClientView({ identity }: { identity: { name: string } })
       {openSlots.length === 0 && <p>Пока нет свободных слотов.</p>}
       {openSlots.map((slot) => (
         <div className="card" key={slot.id}>
+          {slot.is_paid && <span className="badge-paid">Платно</span>}
           <time>{formatDateTime(slot.starts_at)}</time>
           <div className="meta">
             {slot.duration_minutes} мин
             {slot.location ? ` · ${slot.location}` : ""}
           </div>
           {slot.note && <div className="meta">{slot.note}</div>}
-          <button disabled={busy} onClick={() => withBusy(() => clientBookSlot(initData, slot.id))}>
-            Забронировать
-          </button>
+          {slot.is_paid ? (
+            <>
+              <p className="meta">Оплата звёздами скоро будет доступна — пока бронь недоступна.</p>
+              <button disabled>Забронировать</button>
+            </>
+          ) : (
+            <button disabled={busy} onClick={() => withBusy(() => clientBookSlot(initData, slot.id))}>
+              Забронировать
+            </button>
+          )}
         </div>
       ))}
     </div>

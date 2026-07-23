@@ -19,26 +19,26 @@ const newId = () => String(nextId++);
 let slots: Slot[] = [
   {
     id: "s1", master_id: MASTER_ID, starts_at: inHours(26), duration_minutes: 90,
-    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open",
+    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open", is_paid: false,
     created_at: inHours(-2), bookings: [],
   },
   {
     id: "s2", master_id: MASTER_ID, starts_at: inHours(50), duration_minutes: 60,
-    location: "Студия на Тверской", note: null, status: "booked", created_at: inHours(-5),
+    location: "Студия на Тверской", note: null, status: "booked", is_paid: false, created_at: inHours(-5),
     bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, created_at: inHours(-4) }],
   },
   {
     id: "s3", master_id: MASTER_ID, starts_at: inHours(-20), duration_minutes: 60,
-    location: null, note: null, status: "completed", created_at: inHours(-40),
+    location: null, note: null, status: "completed", is_paid: false, created_at: inHours(-40),
     bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, created_at: inHours(-39) }],
   },
   {
     id: "s4", master_id: MASTER_ID, starts_at: inHours(-5), duration_minutes: 60,
-    location: "Выезд", note: null, status: "cancelled", created_at: inHours(-30), bookings: [],
+    location: "Выезд", note: null, status: "cancelled", is_paid: false, created_at: inHours(-30), bookings: [],
   },
   {
     id: "s5", master_id: MASTER_ID, starts_at: inHours(72), duration_minutes: 120,
-    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open",
+    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open", is_paid: true,
     created_at: inHours(-1), bookings: [],
   },
 ];
@@ -68,10 +68,10 @@ export const mockApi = {
   async masterList() {
     return { slots: slots.map(withBookings) };
   },
-  async masterCreateSlot(payload: { starts_at: string; duration_minutes: number; location?: string; note?: string }) {
+  async masterCreateSlot(payload: { starts_at: string; duration_minutes: number; location?: string; note?: string; is_paid?: boolean }) {
     const slot: Slot = {
       id: newId(), master_id: MASTER_ID, status: "open", created_at: new Date().toISOString(), bookings: [],
-      location: payload.location ?? null, note: payload.note ?? null,
+      location: payload.location ?? null, note: payload.note ?? null, is_paid: Boolean(payload.is_paid),
       starts_at: payload.starts_at, duration_minutes: payload.duration_minutes,
     };
     slots = [...slots, slot].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
@@ -104,6 +104,8 @@ export const mockApi = {
     return { open_slots, my_bookings };
   },
   async clientBookSlot(slotId: string) {
+    const slot = slots.find((s) => s.id === slotId);
+    if (slot?.is_paid) throw new Error("payment_required");
     const booking: Booking = {
       id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
       status: "confirmed", cancel_reason: null, cancelled_at: null, created_at: new Date().toISOString(),
