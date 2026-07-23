@@ -31,9 +31,21 @@ export default function ChipScroller({
   }
 
   useEffect(() => {
-    scrollRef.current
-      ?.querySelector(".chip.selected")
-      ?.scrollIntoView(vertical ? { block: "center", inline: "nearest" } : { inline: "center", block: "nearest" });
+    // Center the current selection without scrollIntoView: that call walks
+    // up through every scrollable ancestor, including the page itself, and
+    // ends up jumping the whole screen when this panel opens lower down.
+    // Setting scrollTop/scrollLeft directly touches only this row.
+    const container = scrollRef.current;
+    const selected = container?.querySelector(".chip.selected") as HTMLElement | null;
+    if (container && selected) {
+      const containerRect = container.getBoundingClientRect();
+      const selectedRect = selected.getBoundingClientRect();
+      if (vertical) {
+        container.scrollTop += (selectedRect.top + selectedRect.height / 2) - (containerRect.top + containerRect.height / 2);
+      } else {
+        container.scrollLeft += (selectedRect.left + selectedRect.width / 2) - (containerRect.left + containerRect.width / 2);
+      }
+    }
     updateArrows();
     window.addEventListener("resize", updateArrows);
     return () => window.removeEventListener("resize", updateArrows);
