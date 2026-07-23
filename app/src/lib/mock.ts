@@ -1,0 +1,118 @@
+// Dev-only sample data so both cabinets can be previewed and designed
+// against outside Telegram, without a live backend. Stripped from the
+// production bundle: every call site is gated behind import.meta.env.DEV,
+// which Vite replaces with `false` and dead-code-eliminates on build.
+import type { Booking, Slot } from "./api";
+
+export let mockActive = false;
+export function setMockActive(v: boolean) {
+  mockActive = v;
+}
+
+const MASTER_ID = 1;
+const MODEL_ID = 777;
+const inHours = (h: number) => new Date(Date.now() + h * 3600_000).toISOString();
+
+let nextId = 100;
+const newId = () => String(nextId++);
+
+let slots: Slot[] = [
+  {
+    id: "s1", master_id: MASTER_ID, starts_at: inHours(26), duration_minutes: 90,
+    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open",
+    created_at: inHours(-2), bookings: [],
+  },
+  {
+    id: "s2", master_id: MASTER_ID, starts_at: inHours(50), duration_minutes: 60,
+    location: "Студия на Тверской", note: null, status: "booked", created_at: inHours(-5),
+    bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, created_at: inHours(-4) }],
+  },
+  {
+    id: "s3", master_id: MASTER_ID, starts_at: inHours(-20), duration_minutes: 60,
+    location: null, note: null, status: "completed", created_at: inHours(-40),
+    bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, created_at: inHours(-39) }],
+  },
+  {
+    id: "s4", master_id: MASTER_ID, starts_at: inHours(-5), duration_minutes: 60,
+    location: "Выезд", note: null, status: "cancelled", created_at: inHours(-30), bookings: [],
+  },
+  {
+    id: "s5", master_id: MASTER_ID, starts_at: inHours(72), duration_minutes: 120,
+    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open",
+    created_at: inHours(-1), bookings: [],
+  },
+];
+
+function withBookings(s: Slot): Slot {
+  return { ...s, bookings: slots.find((x) => x.id === s.id)?.bookings ?? [] };
+}
+
+function setBookingStatus(bookingId: string, status: Booking["status"], reopenSlot: boolean) {
+  slots = slots.map((s) => {
+    const hasBooking = s.bookings?.some((b) => b.id === bookingId);
+    if (!hasBooking) return s;
+    return {
+      ...s,
+      status: reopenSlot ? "open" : "completed",
+      bookings: s.bookings?.map((b) => (b.id === bookingId ? { ...b, status, cancelled_at: new Date().toISOString() } : b)),
+    };
+  });
+}
+
+export const mockIdentity = {
+  master: { telegram_id: MASTER_ID, name: "Ты", role: "master" as const },
+  model: { telegram_id: MODEL_ID, name: "Ты", role: "model" as const },
+};
+
+export const mockApi = {
+  async masterList() {
+    return { slots: slots.map(withBookings) };
+  },
+  async masterCreateSlot(payload: { starts_at: string; duration_minutes: number; location?: string; note?: string }) {
+    const slot: Slot = {
+      id: newId(), master_id: MASTER_ID, status: "open", created_at: new Date().toISOString(), bookings: [],
+      location: payload.location ?? null, note: payload.note ?? null,
+      starts_at: payload.starts_at, duration_minutes: payload.duration_minutes,
+    };
+    slots = [...slots, slot].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    return { slot };
+  },
+  async masterCancelSlot(slotId: string) {
+    slots = slots.map((s) => (s.id === slotId ? { ...s, status: "cancelled" } : s));
+    return { ok: true as const };
+  },
+  async masterCancelBooking(bookingId: string) {
+    setBookingStatus(bookingId, "cancelled_by_master", true);
+    return { ok: true as const };
+  },
+  async masterMarkNoShow(bookingId: string) {
+    setBookingStatus(bookingId, "no_show", false);
+    return { ok: true as const };
+  },
+  async masterMarkCompleted(bookingId: string) {
+    setBookingStatus(bookingId, "completed", false);
+    return { ok: true as const };
+  },
+
+  async clientList() {
+    const open_slots = slots.filter((s) => s.status === "open").map(withBookings);
+    const my_bookings: Booking[] = slots.flatMap((s) =>
+      (s.bookings ?? [])
+        .filter((b) => b.model_telegram_id === MODEL_ID)
+        .map((b) => ({ ...b, slots: s })),
+    );
+    return { open_slots, my_bookings };
+  },
+  async clientBookSlot(slotId: string) {
+    const booking: Booking = {
+      id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
+      status: "confirmed", cancel_reason: null, cancelled_at: null, created_at: new Date().toISOString(),
+    };
+    slots = slots.map((s) => (s.id === slotId ? { ...s, status: "booked", bookings: [...(s.bookings ?? []), booking] } : s));
+    return { booking };
+  },
+  async clientCancelBooking(bookingId: string) {
+    setBookingStatus(bookingId, "cancelled_by_model", true);
+    return { ok: true as const };
+  },
+};

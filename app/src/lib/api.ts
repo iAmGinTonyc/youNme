@@ -1,3 +1,5 @@
+import { mockApi, mockActive } from "./mock";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -54,6 +56,7 @@ export function verify(initData: string) {
 }
 
 export function masterList(initData: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterList();
   return callFunction<{ slots: Slot[] }>("master", { initData, action: "list" });
 }
 
@@ -61,33 +64,41 @@ export function masterCreateSlot(
   initData: string,
   payload: { starts_at: string; duration_minutes: number; location?: string; note?: string },
 ) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterCreateSlot(payload);
   return callFunction<{ slot: Slot }>("master", { initData, action: "create_slot", payload });
 }
 
 export function masterCancelSlot(initData: string, slot_id: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterCancelSlot(slot_id);
   return callFunction<{ ok: true }>("master", { initData, action: "cancel_slot", payload: { slot_id } });
 }
 
 export function masterCancelBooking(initData: string, booking_id: string, reason?: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterCancelBooking(booking_id);
   return callFunction<{ ok: true }>("master", { initData, action: "cancel_booking", payload: { booking_id, reason } });
 }
 
 export function masterMarkNoShow(initData: string, booking_id: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterMarkNoShow(booking_id);
   return callFunction<{ ok: true }>("master", { initData, action: "mark_no_show", payload: { booking_id } });
 }
 
 export function masterMarkCompleted(initData: string, booking_id: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterMarkCompleted(booking_id);
   return callFunction<{ ok: true }>("master", { initData, action: "mark_completed", payload: { booking_id } });
 }
 
 export function clientList(initData: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.clientList();
   return callFunction<{ open_slots: Slot[]; my_bookings: Booking[] }>("client", { initData, action: "list" });
 }
 
 export function clientBookSlot(initData: string, slot_id: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.clientBookSlot(slot_id);
   return callFunction<{ booking: Booking }>("client", { initData, action: "book_slot", payload: { slot_id } });
 }
 
 export function clientCancelBooking(initData: string, booking_id: string, reason?: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.clientCancelBooking(booking_id);
   return callFunction<{ ok: true }>("client", { initData, action: "cancel_booking", payload: { booking_id, reason } });
 }
