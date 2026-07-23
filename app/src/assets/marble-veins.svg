@@ -5,24 +5,34 @@
     </filter>
   </defs>
 
-  <g fill="none" stroke="#ffffff" stroke-linecap="round" filter="url(#soften)">
-    <path d="M-40,120 C100,180 160,140 260,260 C360,380 320,420 460,540 C560,620 600,600 700,720 C780,820 820,860 1040,980" stroke-width="3" opacity="0.09" />
-    <path d="M1040,60 C900,140 860,120 760,240 C660,360 700,400 580,500 C480,590 500,650 380,760 C300,830 260,860 -40,960" stroke-width="3" opacity="0.08" />
+  <g fill="none" stroke="#b9944f" stroke-linecap="round" filter="url(#soften)">
+    <path d="M-40,120 C100,180 160,140 260,260 C360,380 320,420 460,540 C560,620 600,600 700,720 C780,820 820,860 1040,980" stroke-width="3" opacity="0.12" />
+    <path d="M1040,60 C900,140 860,120 760,240 C660,360 700,400 580,500 C480,590 500,650 380,760 C300,830 260,860 -40,960" stroke-width="3" opacity="0.11" />
+    <path d="M420,-40 C380,100 440,160 380,280 C320,400 380,460 320,580 C260,700 300,760 220,880 C180,940 160,960 100,1040" stroke-width="2.6" opacity="0.1" />
   </g>
 
-  <g fill="none" stroke="#ffffff" stroke-linecap="round">
-    <path d="M-40,120 C100,180 160,140 260,260 C360,380 320,420 460,540 C560,620 600,600 700,720 C780,820 820,860 1040,980" stroke-width="1.3" opacity="0.17" />
-    <path d="M1040,60 C900,140 860,120 760,240 C660,360 700,400 580,500 C480,590 500,650 380,760 C300,830 260,860 -40,960" stroke-width="1.1" opacity="0.15" />
+  <g fill="none" stroke="#b9944f" stroke-linecap="round">
+    <path d="M-40,120 C100,180 160,140 260,260 C360,380 320,420 460,540 C560,620 600,600 700,720 C780,820 820,860 1040,980" stroke-width="1.3" opacity="0.24" />
+    <path d="M1040,60 C900,140 860,120 760,240 C660,360 700,400 580,500 C480,590 500,650 380,760 C300,830 260,860 -40,960" stroke-width="1.1" opacity="0.22" />
+    <path d="M420,-40 C380,100 440,160 380,280 C320,400 380,460 320,580 C260,700 300,760 220,880 C180,940 160,960 100,1040" stroke-width="1" opacity="0.2" />
 
-    <path d="M260,260 C300,300 340,290 400,340" stroke-width="0.8" opacity="0.12" />
-    <path d="M460,540 C420,580 440,620 380,680" stroke-width="0.8" opacity="0.11" />
-    <path d="M700,720 C740,680 780,690 820,640" stroke-width="0.7" opacity="0.1" />
-    <path d="M580,500 C620,470 650,490 700,450" stroke-width="0.7" opacity="0.1" />
-    <path d="M760,240 C790,270 780,300 820,320" stroke-width="0.6" opacity="0.09" />
+    <path d="M260,260 C300,300 340,290 400,340" stroke-width="0.8" opacity="0.16" />
+    <path d="M460,540 C420,580 440,620 380,680" stroke-width="0.8" opacity="0.15" />
+    <path d="M700,720 C740,680 780,690 820,640" stroke-width="0.7" opacity="0.14" />
+    <path d="M580,500 C620,470 650,490 700,450" stroke-width="0.7" opacity="0.14" />
+    <path d="M760,240 C790,270 780,300 820,320" stroke-width="0.6" opacity="0.13" />
+    <path d="M40,160 C80,190 60,220 100,260" stroke-width="0.6" opacity="0.13" />
+    <path d="M380,280 C340,320 300,310 260,350" stroke-width="0.6" opacity="0.13" />
+    <path d="M320,580 C280,620 240,610 200,650" stroke-width="0.6" opacity="0.13" />
+    <path d="M380,760 C420,790 400,820 440,860" stroke-width="0.6" opacity="0.12" />
 
-    <path d="M120,700 C160,730 150,760 200,800" stroke-width="0.5" opacity="0.08" />
-    <path d="M850,300 C880,330 870,360 910,400" stroke-width="0.5" opacity="0.08" />
-    <path d="M60,440 C90,460 80,490 120,520" stroke-width="0.5" opacity="0.07" />
-    <path d="M900,700 C930,730 920,760 950,790" stroke-width="0.5" opacity="0.07" />
+    <path d="M120,700 C160,730 150,760 200,800" stroke-width="0.5" opacity="0.11" />
+    <path d="M850,300 C880,330 870,360 910,400" stroke-width="0.5" opacity="0.11" />
+    <path d="M60,440 C90,460 80,490 120,520" stroke-width="0.5" opacity="0.1" />
+    <path d="M900,700 C930,730 920,760 950,790" stroke-width="0.5" opacity="0.1" />
+    <path d="M550,120 C580,140 570,170 610,190" stroke-width="0.4" opacity="0.09" />
+    <path d="M40,600 C70,620 60,650 100,680" stroke-width="0.4" opacity="0.09" />
+    <path d="M700,880 C730,900 720,930 760,960" stroke-width="0.4" opacity="0.09" />
+    <path d="M920,150 C940,170 935,195 960,220" stroke-width="0.4" opacity="0.08" />
   </g>
 </svg>

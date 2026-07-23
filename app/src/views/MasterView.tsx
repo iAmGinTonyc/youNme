@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { getInitData } from "../lib/telegram";
+import DateTimePicker from "../components/DateTimePicker";
 import {
   Slot,
   masterCancelBooking,
@@ -77,12 +78,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
 
       <h2>Новый слот</h2>
       <form className="card" onSubmit={handleCreateSlot}>
-        <input
-          type="datetime-local"
-          value={startsAt}
-          onChange={(e) => setStartsAt(e.target.value)}
-          required
-        />
+        <DateTimePicker value={startsAt} onChange={setStartsAt} />
         <input
           type="number"
           min={15}
