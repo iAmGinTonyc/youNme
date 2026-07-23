@@ -50,13 +50,24 @@ Deno.serve(async (req) => {
     }
 
     case "create_slot": {
-      const { starts_at, duration_minutes, location, note, is_paid } = payload ?? {};
+      const { starts_at, duration_minutes, location, note, is_paid, price_stars } = payload ?? {};
       if (!starts_at || !duration_minutes) {
         return json({ error: "starts_at and duration_minutes are required" }, 400);
       }
+      if (is_paid && !(Number.isInteger(price_stars) && price_stars > 0)) {
+        return json({ error: "price_stars must be a positive integer for paid slots" }, 400);
+      }
       const { data: slot, error } = await supabase
         .from("slots")
-        .insert({ master_id: masterId, starts_at, duration_minutes, location, note, is_paid: Boolean(is_paid) })
+        .insert({
+          master_id: masterId,
+          starts_at,
+          duration_minutes,
+          location,
+          note,
+          is_paid: Boolean(is_paid),
+          price_stars: is_paid ? price_stars : null,
+        })
         .select()
         .single();
       if (error) return json({ error: error.message }, 500);

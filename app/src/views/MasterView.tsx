@@ -33,6 +33,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
   const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
   const [isPaid, setIsPaid] = useState(false);
+  const [priceStars, setPriceStars] = useState("");
 
   const initData = getInitData();
 
@@ -61,6 +62,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
   function handleCreateSlot(e: FormEvent) {
     e.preventDefault();
     if (!startsAt) return;
+    if (isPaid && !(Number(priceStars) > 0)) return;
     withBusy(async () => {
       await masterCreateSlot(initData, {
         starts_at: new Date(startsAt).toISOString(),
@@ -68,11 +70,13 @@ export default function MasterView({ identity }: { identity: { name: string } })
         location: location || undefined,
         note: note || undefined,
         is_paid: isPaid,
+        price_stars: isPaid ? Number(priceStars) : undefined,
       });
       setStartsAt("");
       setLocation("");
       setNote("");
       setIsPaid(false);
+      setPriceStars("");
     });
   }
 
@@ -100,6 +104,16 @@ export default function MasterView({ identity }: { identity: { name: string } })
           <input type="checkbox" checked={isPaid} onChange={(e) => setIsPaid(e.target.checked)} />
           Платная бронь
         </label>
+        {isPaid && (
+          <input
+            type="number"
+            min={1}
+            value={priceStars}
+            onChange={(e) => setPriceStars(e.target.value)}
+            placeholder="Цена, ⭐"
+            required
+          />
+        )}
         <button type="submit" disabled={busy}>Создать слот</button>
       </form>
 
@@ -113,7 +127,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
         return (
           <div className="card" key={slot.id}>
             <span className="status">{STATUS_LABEL[slot.status]}</span>
-            {slot.is_paid && <span className="badge-paid">Платная бронь⭐️</span>}
+            {slot.is_paid && <span className="badge-paid">Платная бронь⭐️{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
               {slot.duration_minutes} мин

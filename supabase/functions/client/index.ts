@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyInitData } from "../_shared/verifyInitData.ts";
 import { handleOptions, json } from "../_shared/http.ts";
+import { callTelegramApi } from "../_shared/telegram.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const supabase = createClient(
@@ -49,8 +50,9 @@ Deno.serve(async (req) => {
       const { slot_id } = payload ?? {};
       if (!slot_id) return json({ error: "slot_id is required" }, 400);
 
-      // Paid slots aren't bookable yet — Stars checkout isn't wired up,
-      // so this is rejected server-side, not just hidden in the UI.
+      // Paid slots go through create_invoice + Telegram's payment flow
+      // instead — this direct path stays blocked for them server-side,
+      // not just hidden in the UI.
       const { data: slotCheck } = await supabase.from("slots").select("is_paid").eq("id", slot_id).maybeSingle();
       if (!slotCheck) return json({ error: "not_found" }, 404);
       if (slotCheck.is_paid) return json({ error: "payment_required" }, 402);
@@ -85,6 +87,32 @@ Deno.serve(async (req) => {
 
       await logEvent({ slot_id, booking_id: booking.id, actor_telegram_id: user.id, action: "booking_created" });
       return json({ booking });
+    }
+
+    case "create_invoice": {
+      const { slot_id } = payload ?? {};
+      if (!slot_id) return json({ error: "slot_id is required" }, 400);
+
+      const { data: slot } = await supabase
+        .from("slots")
+        .select("id, status, is_paid, price_stars, starts_at, duration_minutes")
+        .eq("id", slot_id)
+        .maybeSingle();
+      if (!slot) return json({ error: "not_found" }, 404);
+      if (!slot.is_paid || !slot.price_stars) return json({ error: "not_a_paid_slot" }, 400);
+      if (slot.status !== "open") return json({ error: "slot_no_longer_available" }, 409);
+
+      const invoiceUrl = await callTelegramApi<string>(BOT_TOKEN, "createInvoiceLink", {
+        title: "Платная бронь",
+        description: `Запись на ${
+          new Date(slot.starts_at).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" })
+        }, ${slot.duration_minutes} мин`,
+        payload: `book:${slot.id}`,
+        currency: "XTR",
+        prices: [{ label: "Бронь", amount: slot.price_stars }],
+      });
+
+      return json({ invoice_url: invoiceUrl });
     }
 
     case "cancel_booking": {

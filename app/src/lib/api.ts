@@ -19,6 +19,7 @@ export interface Booking {
   status: BookingStatus;
   cancel_reason: string | null;
   cancelled_at: string | null;
+  telegram_payment_charge_id: string | null;
   created_at: string;
   slots?: Slot;
 }
@@ -32,6 +33,7 @@ export interface Slot {
   note: string | null;
   status: SlotStatus;
   is_paid: boolean;
+  price_stars: number | null;
   created_at: string;
   bookings?: Booking[];
   masters?: { name: string | null };
@@ -63,7 +65,14 @@ export function masterList(initData: string) {
 
 export function masterCreateSlot(
   initData: string,
-  payload: { starts_at: string; duration_minutes: number; location?: string; note?: string; is_paid?: boolean },
+  payload: {
+    starts_at: string;
+    duration_minutes: number;
+    location?: string;
+    note?: string;
+    is_paid?: boolean;
+    price_stars?: number;
+  },
 ) {
   if (import.meta.env.DEV && mockActive) return mockApi.masterCreateSlot(payload);
   return callFunction<{ slot: Slot }>("master", { initData, action: "create_slot", payload });
@@ -97,6 +106,10 @@ export function clientList(initData: string) {
 export function clientBookSlot(initData: string, slot_id: string) {
   if (import.meta.env.DEV && mockActive) return mockApi.clientBookSlot(slot_id);
   return callFunction<{ booking: Booking }>("client", { initData, action: "book_slot", payload: { slot_id } });
+}
+
+export function clientCreateInvoice(initData: string, slot_id: string) {
+  return callFunction<{ invoice_url: string }>("client", { initData, action: "create_invoice", payload: { slot_id } });
 }
 
 export function clientCancelBooking(initData: string, booking_id: string, reason?: string) {
