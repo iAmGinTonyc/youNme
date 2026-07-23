@@ -279,56 +279,53 @@ input:focus, textarea:focus {
 
 .datepicker-time {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--hairline);
+}
+
+.time-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--ivory-dim);
+  margin-top: 4px;
 }
 
-.datepicker-time select {
-  font-family: inherit;
-  font-size: 14px;
-  padding: 6px 8px;
-  border-radius: 3px;
-  border: 1px solid var(--hairline-strong);
-  background: var(--ink);
-  color: var(--ivory);
-}
-
-.datepicker-time select:focus {
-  outline: none;
-  border-color: var(--gold);
-}
-
-.datepicker-done {
-  margin-left: auto;
+.time-label:first-child {
   margin-top: 0;
 }
 
-.duration-picker {
+.datepicker-done {
+  align-self: flex-end;
+  margin-top: 4px;
+}
+
+.chip-scroller {
   position: relative;
 }
 
-.duration-row {
+.chip-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   scroll-behavior: smooth;
   padding: 2px 1px;
   scrollbar-width: none;
 }
 
-.duration-row::-webkit-scrollbar {
+.chip-row::-webkit-scrollbar {
   display: none;
 }
 
-.duration-chip {
+.chip {
   flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  min-width: 56px;
+  height: 50px;
+  padding: 0 10px;
   margin: 0;
   display: flex;
   align-items: center;
@@ -336,27 +333,27 @@ input:focus, textarea:focus {
   background: var(--ink);
   color: var(--ivory);
   border: 1px solid var(--hairline-strong);
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: 5px;
+  font-size: 15px;
   font-weight: 500;
 }
 
-.duration-chip:hover:not(.selected) {
+.chip:hover:not(.selected) {
   border-color: var(--gold);
 }
 
-.duration-chip.selected {
+.chip.selected {
   background: linear-gradient(160deg, var(--gold-bright), var(--gold));
   color: #1a1408;
   border-color: var(--gold);
   font-weight: 700;
 }
 
-.duration-arrow {
+.chip-arrow {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 30px;
+  width: 32px;
   padding: 0;
   margin: 0;
   display: flex;
@@ -367,15 +364,15 @@ input:focus, textarea:focus {
   border: none;
   border-radius: 0;
   z-index: 5;
-  font-size: 16px;
+  font-size: 17px;
 }
 
-.duration-arrow.right {
+.chip-arrow.right {
   right: 0;
   background: linear-gradient(270deg, var(--panel) 40%, transparent);
 }
 
-.duration-arrow.left {
+.chip-arrow.left {
   left: 0;
 }
 

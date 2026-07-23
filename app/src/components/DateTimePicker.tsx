@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import ChipScroller from "./ChipScroller";
 
 const MONTHS = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
   "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
 ];
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const MINUTE_STEPS = [0, 15, 30, 45];
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -123,13 +125,10 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
           </div>
 
           <div className="datepicker-time">
-            <select value={hour} onChange={(e) => changeHour(Number(e.target.value))}>
-              {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{pad(h)}</option>)}
-            </select>
-            <span>:</span>
-            <select value={minute} onChange={(e) => changeMinute(Number(e.target.value))}>
-              {MINUTE_STEPS.map((mi) => <option key={mi} value={mi}>{pad(mi)}</option>)}
-            </select>
+            <span className="time-label">Часы</span>
+            <ChipScroller options={HOURS} value={hour} onChange={changeHour} format={pad} />
+            <span className="time-label">Минуты</span>
+            <ChipScroller options={MINUTE_STEPS} value={minute} onChange={changeMinute} format={pad} />
             <button type="button" className="secondary datepicker-done" onClick={() => setOpen(false)}>
               Готово
             </button>

@@ -113,7 +113,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
         return (
           <div className="card" key={slot.id}>
             <span className="status">{STATUS_LABEL[slot.status]}</span>
-            {slot.is_paid && <span className="badge-paid">Платно</span>}
+            {slot.is_paid && <span className="badge-paid">Платная бронь⭐️</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
               {slot.duration_minutes} мин
