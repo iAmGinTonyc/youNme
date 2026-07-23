@@ -8,7 +8,7 @@ export default function DurationPicker({ value, onChange }: { value: number; onC
 
   if (!revealed) {
     return (
-      <button type="button" className="datepicker-trigger" onClick={() => setRevealed(true)}>
+      <button type="button" className="duration-trigger" onClick={() => setRevealed(true)}>
         Выбери длительность сеанса
       </button>
     );
