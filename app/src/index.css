@@ -534,3 +534,32 @@ input:focus, textarea:focus {
   margin-left: 6px;
   margin-bottom: 8px;
 }
+
+.badge-private {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 9px;
+  border-radius: 2px;
+  border: 1px solid var(--hairline-strong);
+  background: transparent;
+  color: var(--gold-bright);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.link-row input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  font-size: 12px;
+  color: var(--ivory-dim);
+}

@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     }
 
     case "create_slot": {
-      const { starts_at, duration_minutes, location, note, is_paid, price_stars } = payload ?? {};
+      const { starts_at, duration_minutes, location, note, is_paid, price_stars, is_private } = payload ?? {};
       if (!starts_at || !duration_minutes) {
         return json({ error: "starts_at and duration_minutes are required" }, 400);
       }
@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
           note,
           is_paid: Boolean(is_paid),
           price_stars: is_paid ? price_stars : null,
+          is_private: Boolean(is_private),
         })
         .select()
         .single();

@@ -36,6 +36,7 @@ export interface Slot {
   status: SlotStatus;
   is_paid: boolean;
   price_stars: number | null;
+  is_private: boolean;
   archived_at: string | null;
   created_at: string;
   bookings?: Booking[];
@@ -75,6 +76,7 @@ export function masterCreateSlot(
     note?: string;
     is_paid?: boolean;
     price_stars?: number;
+    is_private?: boolean;
   },
 ) {
   if (import.meta.env.DEV && mockActive) return mockApi.masterCreateSlot(payload);
@@ -106,9 +108,13 @@ export function masterMarkCompleted(initData: string, booking_id: string) {
   return callFunction<{ ok: true }>("master", { initData, action: "mark_completed", payload: { booking_id } });
 }
 
-export function clientList(initData: string) {
-  if (import.meta.env.DEV && mockActive) return mockApi.clientList();
-  return callFunction<{ open_slots: Slot[]; my_bookings: Booking[] }>("client", { initData, action: "list" });
+export function clientList(initData: string, slotId?: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.clientList(slotId);
+  return callFunction<{ open_slots: Slot[]; my_bookings: Booking[] }>("client", {
+    initData,
+    action: "list",
+    payload: { slot_id: slotId },
+  });
 }
 
 export function clientBookSlot(initData: string, slot_id: string) {

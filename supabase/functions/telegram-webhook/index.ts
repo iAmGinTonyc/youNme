@@ -35,11 +35,11 @@ interface SentMessage {
   message_id: number;
 }
 
-async function sendMessage(chatId: number, text: string, withAppButton = false): Promise<SentMessage | undefined> {
+async function sendMessage(chatId: number, text: string, appUrl?: string): Promise<SentMessage | undefined> {
   const body: Record<string, unknown> = { chat_id: chatId, text };
-  if (withAppButton && MINI_APP_URL) {
+  if (appUrl) {
     body.reply_markup = {
-      inline_keyboard: [[{ text: "Открыть приложение", web_app: { url: MINI_APP_URL } }]],
+      inline_keyboard: [[{ text: "Открыть приложение", web_app: { url: appUrl } }]],
     };
   }
   return await callTelegramApi<SentMessage>(BOT_TOKEN, "sendMessage", body).catch(() => undefined);
@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
         user_id: payer.id,
         telegram_payment_charge_id: chargeId,
       }).catch(() => {});
-      await sendMessage(message.chat.id, "Слот только что забронировали — звёзды возвращены.", true);
+      await sendMessage(message.chat.id, "Слот только что забронировали — звёзды возвращены.", MINI_APP_URL);
       await logEvent({ slot_id: slotId ?? undefined, actor_telegram_id: payer.id, action: "payment_refunded_race" });
       return json({ ok: true });
     }
@@ -128,20 +128,39 @@ Deno.serve(async (req) => {
       action: "booking_paid",
       details: { amount: payment.total_amount },
     });
-    await sendMessage(message.chat.id, "Оплата прошла, бронь подтверждена ✅", true);
+    await sendMessage(message.chat.id, "Оплата прошла, бронь подтверждена ✅", MINI_APP_URL);
     return json({ ok: true });
   }
 
-  if (message?.text === "/start") {
+  if (message?.text?.startsWith("/start")) {
+    const param = message.text.slice("/start".length).trim();
+
+    if (param.startsWith("slot_")) {
+      // Deep link from a master's shared private-slot link
+      // (t.me/<bot>?start=slot_<id>): only reachable this way, never
+      // listed in the public feed. Look it up fresh rather than
+      // trusting the id blindly — it may be gone by the time someone
+      // taps the link.
+      const slotId = param.slice("slot_".length);
+      const { data: slot } = await supabase.from("slots").select("id, status").eq("id", slotId).maybeSingle();
+      if (slot && slot.status === "open" && MINI_APP_URL) {
+        await sendMessage(message.chat.id, "Вам предложили запись — откройте, чтобы посмотреть детали.", `${MINI_APP_URL}?slot=${slotId}`);
+      } else {
+        await sendMessage(message.chat.id, "Эта запись больше недоступна.");
+      }
+      return json({ ok: true });
+    }
+
     const greeting = MINI_APP_URL
       ? "Привет! Нажми на кнопку ниже, чтобы открыть приложение."
       : "Привет! Приложение скоро будет доступно.";
-    const sent = await sendMessage(message.chat.id, greeting, true);
+    const sent = await sendMessage(message.chat.id, greeting, MINI_APP_URL);
     if (sent) await pinMessage(message.chat.id, sent.message_id);
+    return json({ ok: true });
   }
 
   if (message?.text === "/app") {
-    await sendMessage(message.chat.id, "Открыть приложение:", true);
+    await sendMessage(message.chat.id, "Открыть приложение:", MINI_APP_URL);
   }
 
   return json({ ok: true });

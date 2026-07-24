@@ -22,9 +22,10 @@ export default function ClientView({ identity }: { identity: { name: string } })
   const [error, setError] = useState<string | null>(null);
 
   const initData = getInitData();
+  const privateSlotId = new URLSearchParams(window.location.search).get("slot") ?? undefined;
 
   async function refresh() {
-    const { open_slots, my_bookings } = await clientList(initData);
+    const { open_slots, my_bookings } = await clientList(initData, privateSlotId);
     setOpenSlots(open_slots);
     setMyBookings(my_bookings);
   }
@@ -99,6 +100,7 @@ export default function ClientView({ identity }: { identity: { name: string } })
       {openSlots.length === 0 && <p>Пока нет свободных слотов.</p>}
       {openSlots.map((slot) => (
         <div className="card" key={slot.id}>
+          {slot.is_private && <span className="badge-private">Личное предложение</span>}
           {slot.is_paid && <span className="badge-paid">Платная бронь⭐️{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
           <time>{formatDateTime(slot.starts_at)}</time>
           <div className="meta">

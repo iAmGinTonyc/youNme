@@ -19,37 +19,42 @@ const newId = () => String(nextId++);
 let slots: Slot[] = [
   {
     id: "s1", master_id: MASTER_ID, starts_at: inHours(26), duration_minutes: 90,
-    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open", is_paid: false, price_stars: null, archived_at: null,
+    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open", is_paid: false, price_stars: null, is_private: false, archived_at: null,
     created_at: inHours(-2), bookings: [],
   },
   {
     id: "s2", master_id: MASTER_ID, starts_at: inHours(50), duration_minutes: 60,
-    location: "Студия на Тверской", note: null, status: "booked", is_paid: false, price_stars: null, archived_at: null, created_at: inHours(-5),
+    location: "Студия на Тверской", note: null, status: "booked", is_paid: false, price_stars: null, is_private: false, archived_at: null, created_at: inHours(-5),
     bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-4) }],
   },
   {
     id: "s3", master_id: MASTER_ID, starts_at: inHours(-20), duration_minutes: 60,
-    location: null, note: null, status: "completed", is_paid: false, price_stars: null, archived_at: null, created_at: inHours(-40),
+    location: null, note: null, status: "completed", is_paid: false, price_stars: null, is_private: false, archived_at: null, created_at: inHours(-40),
     bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-39) }],
   },
   {
     id: "s4", master_id: MASTER_ID, starts_at: inHours(-5), duration_minutes: 60,
-    location: "Выезд", note: null, status: "cancelled", is_paid: false, price_stars: null, archived_at: null, created_at: inHours(-30), bookings: [],
+    location: "Выезд", note: null, status: "cancelled", is_paid: false, price_stars: null, is_private: false, archived_at: null, created_at: inHours(-30), bookings: [],
   },
   {
     id: "s5", master_id: MASTER_ID, starts_at: inHours(72), duration_minutes: 120,
-    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open", is_paid: true, price_stars: 300, archived_at: null,
+    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open", is_paid: true, price_stars: 300, is_private: false, archived_at: null,
     created_at: inHours(-1), bookings: [],
   },
   {
     id: "s6", master_id: MASTER_ID, starts_at: inHours(-3), duration_minutes: 60,
-    location: "Студия на Тверской", note: null, status: "booked", is_paid: true, price_stars: 150, archived_at: null,
+    location: "Студия на Тверской", note: null, status: "booked", is_paid: true, price_stars: 150, is_private: false, archived_at: null,
     created_at: inHours(-30),
     bookings: [{
       id: "b3", slot_id: "s6", model_telegram_id: MODEL_ID, model_name: "Ты", status: "confirmed",
       cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: "mock_charge_1",
       master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-29),
     }],
+  },
+  {
+    id: "s7", master_id: MASTER_ID, starts_at: inHours(48), duration_minutes: 60,
+    location: "Студия на Тверской", note: "Персональное предложение", status: "open", is_paid: false, price_stars: null, is_private: true, archived_at: null,
+    created_at: inHours(-1), bookings: [],
   },
 ];
 
@@ -94,12 +99,14 @@ export const mockApi = {
     return { slots: slots.filter((s) => !s.archived_at).map(withBookings) };
   },
   async masterCreateSlot(payload: {
-    starts_at: string; duration_minutes: number; location?: string; note?: string; is_paid?: boolean; price_stars?: number;
+    starts_at: string; duration_minutes: number; location?: string; note?: string;
+    is_paid?: boolean; price_stars?: number; is_private?: boolean;
   }) {
     const slot: Slot = {
       id: newId(), master_id: MASTER_ID, status: "open", created_at: new Date().toISOString(), bookings: [],
       location: payload.location ?? null, note: payload.note ?? null, is_paid: Boolean(payload.is_paid),
-      price_stars: payload.is_paid ? payload.price_stars ?? null : null, archived_at: null,
+      price_stars: payload.is_paid ? payload.price_stars ?? null : null,
+      is_private: Boolean(payload.is_private), archived_at: null,
       starts_at: payload.starts_at, duration_minutes: payload.duration_minutes,
     };
     slots = [...slots, slot].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
@@ -137,8 +144,12 @@ export const mockApi = {
     return { ok: true as const };
   },
 
-  async clientList() {
-    const open_slots = slots.filter((s) => s.status === "open").map(withBookings);
+  async clientList(slotId?: string) {
+    let open_slots = slots.filter((s) => s.status === "open" && !s.is_private).map(withBookings);
+    if (slotId && !open_slots.some((s) => s.id === slotId)) {
+      const privateSlot = slots.find((s) => s.id === slotId && s.status === "open");
+      if (privateSlot) open_slots = [withBookings(privateSlot), ...open_slots];
+    }
     const my_bookings: Booking[] = slots.flatMap((s) =>
       (s.bookings ?? [])
         .filter((b) => b.model_telegram_id === MODEL_ID)

@@ -30,12 +30,29 @@ Deno.serve(async (req) => {
 
   switch (action) {
     case "list": {
+      const { slot_id } = payload ?? {};
+
       const { data: openSlots, error: openError } = await supabase
         .from("slots")
         .select("*, masters(name)")
         .eq("status", "open")
+        .eq("is_private", false)
         .order("starts_at", { ascending: true });
       if (openError) return json({ error: openError.message }, 500);
+
+      let slots = openSlots ?? [];
+      // A private slot is only ever surfaced when its own id is asked
+      // for explicitly — i.e. by whoever opened the deep link the
+      // master shared. It's excluded from the query above on purpose.
+      if (slot_id && !slots.some((s) => s.id === slot_id)) {
+        const { data: privateSlot } = await supabase
+          .from("slots")
+          .select("*, masters(name)")
+          .eq("id", slot_id)
+          .eq("status", "open")
+          .maybeSingle();
+        if (privateSlot) slots = [privateSlot, ...slots];
+      }
 
       const { data: myBookings, error: bookingsError } = await supabase
         .from("bookings")
@@ -44,7 +61,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false });
       if (bookingsError) return json({ error: bookingsError.message }, 500);
 
-      return json({ open_slots: openSlots, my_bookings: myBookings });
+      return json({ open_slots: slots, my_bookings: myBookings });
     }
 
     case "book_slot": {

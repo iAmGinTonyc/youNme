@@ -33,6 +33,12 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
 }
 
+// Update if the bot is ever renamed in BotFather.
+const BOT_USERNAME = "youNme_service_bot";
+function slotShareLink(slotId: string) {
+  return `https://t.me/${BOT_USERNAME}?start=slot_${slotId}`;
+}
+
 export default function MasterView({ identity }: { identity: { name: string } }) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [busy, setBusy] = useState(false);
@@ -44,6 +50,8 @@ export default function MasterView({ identity }: { identity: { name: string } })
   const [note, setNote] = useState("");
   const [isPaid, setIsPaid] = useState(false);
   const [priceStars, setPriceStars] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const initData = getInitData();
 
@@ -81,13 +89,26 @@ export default function MasterView({ identity }: { identity: { name: string } })
         note: note || undefined,
         is_paid: isPaid,
         price_stars: isPaid ? Number(priceStars) : undefined,
+        is_private: isPrivate,
       });
       setStartsAt("");
       setLocation("");
       setNote("");
       setIsPaid(false);
       setPriceStars("");
+      setIsPrivate(false);
     });
+  }
+
+  async function handleCopyLink(slotId: string) {
+    const link = slotShareLink(slotId);
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedId(slotId);
+      setTimeout(() => setCopiedId((c) => (c === slotId ? null : c)), 1500);
+    } catch {
+      setError(`Не удалось скопировать автоматически — вот ссылка: ${link}`);
+    }
   }
 
   return (
@@ -124,6 +145,10 @@ export default function MasterView({ identity }: { identity: { name: string } })
             required
           />
         )}
+        <label className="checkbox-row">
+          <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+          Личная запись (только по ссылке)
+        </label>
         <button type="submit" disabled={busy}>Создать слот</button>
       </form>
 
@@ -137,6 +162,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
         const card = (
           <div className="card">
             <span className="status">{STATUS_LABEL[slot.status]}</span>
+            {slot.is_private && <span className="badge-private">Личная запись</span>}
             {slot.is_paid && <span className="badge-paid">Платная бронь⭐️{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
@@ -158,6 +184,14 @@ export default function MasterView({ identity }: { identity: { name: string } })
               <div className="meta">Депозит удержан ⭐{slot.price_stars}</div>
             )}
 
+            {slot.status === "open" && slot.is_private && (
+              <div className="link-row">
+                <input readOnly value={slotShareLink(slot.id)} onFocus={(e) => e.target.select()} />
+                <button type="button" className="secondary" onClick={() => handleCopyLink(slot.id)}>
+                  {copiedId === slot.id ? "Скопировано" : "Копировать"}
+                </button>
+              </div>
+            )}
             {slot.status === "open" && (
               <button className="secondary" disabled={busy} onClick={() => withBusy(() => masterCancelSlot(initData, slot.id))}>
                 Отменить слот
