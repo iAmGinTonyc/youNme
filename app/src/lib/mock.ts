@@ -25,12 +25,12 @@ let slots: Slot[] = [
   {
     id: "s2", master_id: MASTER_ID, starts_at: inHours(50), duration_minutes: 60,
     location: "Студия на Тверской", note: null, status: "booked", is_paid: false, price_stars: null, created_at: inHours(-5),
-    bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, created_at: inHours(-4) }],
+    bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-4) }],
   },
   {
     id: "s3", master_id: MASTER_ID, starts_at: inHours(-20), duration_minutes: 60,
     location: null, note: null, status: "completed", is_paid: false, price_stars: null, created_at: inHours(-40),
-    bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, created_at: inHours(-39) }],
+    bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-39) }],
   },
   {
     id: "s4", master_id: MASTER_ID, starts_at: inHours(-5), duration_minutes: 60,
@@ -40,6 +40,16 @@ let slots: Slot[] = [
     id: "s5", master_id: MASTER_ID, starts_at: inHours(72), duration_minutes: 120,
     location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open", is_paid: true, price_stars: 300,
     created_at: inHours(-1), bookings: [],
+  },
+  {
+    id: "s6", master_id: MASTER_ID, starts_at: inHours(-3), duration_minutes: 60,
+    location: "Студия на Тверской", note: null, status: "booked", is_paid: true, price_stars: 150,
+    created_at: inHours(-30),
+    bookings: [{
+      id: "b3", slot_id: "s6", model_telegram_id: MODEL_ID, model_name: "Ты", status: "confirmed",
+      cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: "mock_charge_1",
+      master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-29),
+    }],
   },
 ];
 
@@ -55,6 +65,21 @@ function setBookingStatus(bookingId: string, status: Booking["status"], reopenSl
       ...s,
       status: reopenSlot ? "open" : "completed",
       bookings: s.bookings?.map((b) => (b.id === bookingId ? { ...b, status, cancelled_at: new Date().toISOString() } : b)),
+    };
+  });
+}
+
+// Mirrors finalizeIfBothConfirmed on the backend: only flips to
+// "completed" (and would refund, in the real backend) once both sides
+// have confirmed.
+function maybeFinalize(bookingId: string) {
+  slots = slots.map((s) => {
+    const booking = s.bookings?.find((b) => b.id === bookingId);
+    if (!booking || !booking.master_confirmed_at || !booking.client_confirmed_at) return s;
+    return {
+      ...s,
+      status: "completed" as const,
+      bookings: s.bookings?.map((b) => (b.id === bookingId ? { ...b, status: "completed" as const } : b)),
     };
   });
 }
@@ -93,7 +118,18 @@ export const mockApi = {
     return { ok: true as const };
   },
   async masterMarkCompleted(bookingId: string) {
-    setBookingStatus(bookingId, "completed", false);
+    const slot = slots.find((s) => s.bookings?.some((b) => b.id === bookingId));
+    if (!slot?.is_paid) {
+      setBookingStatus(bookingId, "completed", false);
+      return { ok: true as const };
+    }
+    slots = slots.map((s) => ({
+      ...s,
+      bookings: s.bookings?.map((b) =>
+        b.id === bookingId ? { ...b, master_confirmed_at: new Date().toISOString() } : b
+      ),
+    }));
+    maybeFinalize(bookingId);
     return { ok: true as const };
   },
 
@@ -112,6 +148,7 @@ export const mockApi = {
     const booking: Booking = {
       id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
       status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null,
+      master_confirmed_at: null, client_confirmed_at: null,
       created_at: new Date().toISOString(),
     };
     slots = slots.map((s) => (s.id === slotId ? { ...s, status: "booked", bookings: [...(s.bookings ?? []), booking] } : s));
@@ -122,10 +159,21 @@ export const mockApi = {
       id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
       status: "confirmed", cancel_reason: null, cancelled_at: null,
       telegram_payment_charge_id: "mock_charge_" + newId(),
+      master_confirmed_at: null, client_confirmed_at: null,
       created_at: new Date().toISOString(),
     };
     slots = slots.map((s) => (s.id === slotId ? { ...s, status: "booked", bookings: [...(s.bookings ?? []), booking] } : s));
     return { booking };
+  },
+  async clientConfirmCompleted(bookingId: string) {
+    slots = slots.map((s) => ({
+      ...s,
+      bookings: s.bookings?.map((b) =>
+        b.id === bookingId ? { ...b, client_confirmed_at: new Date().toISOString() } : b
+      ),
+    }));
+    maybeFinalize(bookingId);
+    return { ok: true as const };
   },
   async clientCancelBooking(bookingId: string) {
     setBookingStatus(bookingId, "cancelled_by_model", true);

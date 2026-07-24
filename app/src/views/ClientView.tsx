@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getInitData } from "../lib/telegram";
-import { Booking, Slot, clientBookSlot, clientCancelBooking, clientList } from "../lib/api";
+import { Booking, Slot, clientBookSlot, clientCancelBooking, clientConfirmCompleted, clientList } from "../lib/api";
 import { payForSlot } from "../lib/payment";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -75,6 +75,15 @@ export default function ClientView({ identity }: { identity: { name: string } })
           )}
           {booking.slots && <time>{formatDateTime(booking.slots.starts_at)}</time>}
           {booking.slots?.location && <div className="meta">{booking.slots.location}</div>}
+          {booking.status === "confirmed" && booking.slots?.is_paid && (
+            booking.client_confirmed_at ? (
+              <p className="meta">Вы подтвердили. Ждём подтверждения от мастера — депозит вернётся автоматически.</p>
+            ) : new Date(booking.slots.starts_at) <= new Date() ? (
+              <button disabled={busy} onClick={() => withBusy(() => clientConfirmCompleted(initData, booking.id))}>
+                Подтвердить, что всё прошло
+              </button>
+            ) : null
+          )}
           {booking.status === "confirmed" && (
             <button className="secondary" disabled={busy} onClick={() => withBusy(() => clientCancelBooking(initData, booking.id))}>
               Отменить бронь

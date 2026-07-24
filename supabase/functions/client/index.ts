@@ -6,6 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyInitData } from "../_shared/verifyInitData.ts";
 import { handleOptions, json } from "../_shared/http.ts";
 import { callTelegramApi } from "../_shared/telegram.ts";
+import { finalizeIfBothConfirmed } from "../_shared/finalizeBooking.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const supabase = createClient(
@@ -113,6 +114,29 @@ Deno.serve(async (req) => {
       });
 
       return json({ invoice_url: invoiceUrl });
+    }
+
+    case "confirm_completed": {
+      const { booking_id } = payload ?? {};
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("id, slot_id, status, slots!inner(is_paid, starts_at)")
+        .eq("id", booking_id)
+        .eq("model_telegram_id", user.id)
+        .maybeSingle();
+      if (!booking) return json({ error: "not_found" }, 404);
+      if (booking.status !== "confirmed") return json({ error: "booking_not_active" }, 409);
+
+      const slotInfo = booking.slots as unknown as { is_paid: boolean; starts_at: string };
+      if (!slotInfo.is_paid) return json({ error: "not_a_paid_booking" }, 400);
+      if (new Date(slotInfo.starts_at) > new Date()) return json({ error: "too_early" }, 409);
+
+      await supabase.from("bookings").update({ client_confirmed_at: new Date().toISOString() })
+        .eq("id", booking_id).is("client_confirmed_at", null);
+      await logEvent({ slot_id: booking.slot_id, booking_id, actor_telegram_id: user.id, action: "client_confirmed_completed" });
+
+      await finalizeIfBothConfirmed(supabase, BOT_TOKEN, booking_id, booking.slot_id);
+      return json({ ok: true });
     }
 
     case "cancel_booking": {

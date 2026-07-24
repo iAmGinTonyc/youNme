@@ -20,6 +20,8 @@ export interface Booking {
   cancel_reason: string | null;
   cancelled_at: string | null;
   telegram_payment_charge_id: string | null;
+  master_confirmed_at: string | null;
+  client_confirmed_at: string | null;
   created_at: string;
   slots?: Slot;
 }
@@ -110,6 +112,11 @@ export function clientBookSlot(initData: string, slot_id: string) {
 
 export function clientCreateInvoice(initData: string, slot_id: string) {
   return callFunction<{ invoice_url: string }>("client", { initData, action: "create_invoice", payload: { slot_id } });
+}
+
+export function clientConfirmCompleted(initData: string, booking_id: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.clientConfirmCompleted(booking_id);
+  return callFunction<{ ok: true }>("client", { initData, action: "confirm_completed", payload: { booking_id } });
 }
 
 export function clientCancelBooking(initData: string, booking_id: string, reason?: string) {

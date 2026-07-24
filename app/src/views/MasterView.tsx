@@ -152,9 +152,13 @@ export default function MasterView({ identity }: { identity: { name: string } })
             )}
             {slot.status === "booked" && activeBooking && (
               <>
-                <button disabled={busy} onClick={() => withBusy(() => masterMarkCompleted(initData, activeBooking.id))}>
-                  Состоялось
-                </button>
+                {slot.is_paid && activeBooking.master_confirmed_at ? (
+                  <p className="meta">Вы подтвердили. Ждём подтверждения от клиента — депозит вернётся автоматически.</p>
+                ) : (
+                  <button disabled={busy} onClick={() => withBusy(() => masterMarkCompleted(initData, activeBooking.id))}>
+                    Состоялось
+                  </button>
+                )}
                 <button className="secondary" disabled={busy} onClick={() => withBusy(() => masterMarkNoShow(initData, activeBooking.id))}>
                   Не пришли
                 </button>

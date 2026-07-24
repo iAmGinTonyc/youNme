@@ -8,6 +8,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyInitData } from "../_shared/verifyInitData.ts";
 import { handleOptions, json } from "../_shared/http.ts";
+import { finalizeIfBothConfirmed } from "../_shared/finalizeBooking.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const supabase = createClient(
@@ -119,9 +120,8 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    case "mark_no_show":
-    case "mark_completed": {
-      const finalStatus = action === "mark_no_show" ? "no_show" : "completed";
+    case "mark_no_show": {
+      // Deposit stays put on a no-show — it's not returned automatically.
       const { booking_id } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
@@ -132,14 +132,39 @@ Deno.serve(async (req) => {
       if (!booking) return json({ error: "not_found" }, 404);
       if (booking.status !== "confirmed") return json({ error: "booking_not_active" }, 409);
 
-      await supabase.from("bookings").update({ status: finalStatus }).eq("id", booking_id);
+      await supabase.from("bookings").update({ status: "no_show" }).eq("id", booking_id);
       await supabase.from("slots").update({ status: "completed" }).eq("id", booking.slot_id);
-      await logEvent({
-        slot_id: booking.slot_id,
-        booking_id,
-        actor_telegram_id: masterId,
-        action: finalStatus === "no_show" ? "booking_marked_no_show" : "booking_marked_completed",
-      });
+      await logEvent({ slot_id: booking.slot_id, booking_id, actor_telegram_id: masterId, action: "booking_marked_no_show" });
+      return json({ ok: true });
+    }
+
+    case "mark_completed": {
+      const { booking_id } = payload ?? {};
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("id, slot_id, status, slots!inner(master_id, is_paid)")
+        .eq("id", booking_id)
+        .eq("slots.master_id", masterId)
+        .maybeSingle();
+      if (!booking) return json({ error: "not_found" }, 404);
+      if (booking.status !== "confirmed") return json({ error: "booking_not_active" }, 409);
+
+      const isPaid = (booking.slots as unknown as { is_paid: boolean }).is_paid;
+
+      if (!isPaid) {
+        await supabase.from("bookings").update({ status: "completed" }).eq("id", booking_id);
+        await supabase.from("slots").update({ status: "completed" }).eq("id", booking.slot_id);
+        await logEvent({ slot_id: booking.slot_id, booking_id, actor_telegram_id: masterId, action: "booking_marked_completed" });
+        return json({ ok: true });
+      }
+
+      // Paid booking: record the master's side, only actually complete
+      // (and refund the deposit) once the client has confirmed too.
+      await supabase.from("bookings").update({ master_confirmed_at: new Date().toISOString() })
+        .eq("id", booking_id).is("master_confirmed_at", null);
+      await logEvent({ slot_id: booking.slot_id, booking_id, actor_telegram_id: masterId, action: "master_confirmed_completed" });
+
+      await finalizeIfBothConfirmed(supabase, BOT_TOKEN, booking_id, booking.slot_id);
       return json({ ok: true });
     }
 
