@@ -1,9 +1,11 @@
-import { FormEvent, useEffect, useState } from "react";
+import { Fragment, FormEvent, useEffect, useState } from "react";
 import { getInitData } from "../lib/telegram";
 import DateTimePicker from "../components/DateTimePicker";
 import DurationPicker from "../components/DurationPicker";
+import SwipeToArchive from "../components/SwipeToArchive";
 import {
   Slot,
+  masterArchiveSlot,
   masterCancelBooking,
   masterCancelSlot,
   masterCreateSlot,
@@ -132,8 +134,8 @@ export default function MasterView({ identity }: { identity: { name: string } })
       {slots.map((slot) => {
         const activeBooking = slot.bookings?.find((b) => b.status === "confirmed");
         const pastBooking = slot.bookings?.find((b) => b.status !== "confirmed");
-        return (
-          <div className="card" key={slot.id}>
+        const card = (
+          <div className="card">
             <span className="status">{STATUS_LABEL[slot.status]}</span>
             {slot.is_paid && <span className="badge-paid">Платная бронь⭐️{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
@@ -180,6 +182,15 @@ export default function MasterView({ identity }: { identity: { name: string } })
             )}
           </div>
         );
+
+        if (slot.status === "cancelled") {
+          return (
+            <SwipeToArchive key={slot.id} disabled={busy} onArchive={() => withBusy(() => masterArchiveSlot(initData, slot.id))}>
+              {card}
+            </SwipeToArchive>
+          );
+        }
+        return <Fragment key={slot.id}>{card}</Fragment>;
       })}
     </div>
   );

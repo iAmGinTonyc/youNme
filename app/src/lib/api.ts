@@ -36,6 +36,7 @@ export interface Slot {
   status: SlotStatus;
   is_paid: boolean;
   price_stars: number | null;
+  archived_at: string | null;
   created_at: string;
   bookings?: Booking[];
   masters?: { name: string | null };
@@ -83,6 +84,11 @@ export function masterCreateSlot(
 export function masterCancelSlot(initData: string, slot_id: string) {
   if (import.meta.env.DEV && mockActive) return mockApi.masterCancelSlot(slot_id);
   return callFunction<{ ok: true }>("master", { initData, action: "cancel_slot", payload: { slot_id } });
+}
+
+export function masterArchiveSlot(initData: string, slot_id: string) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterArchiveSlot(slot_id);
+  return callFunction<{ ok: true }>("master", { initData, action: "archive_slot", payload: { slot_id } });
 }
 
 export function masterCancelBooking(initData: string, booking_id: string, reason?: string) {

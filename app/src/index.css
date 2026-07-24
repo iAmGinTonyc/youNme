@@ -91,6 +91,39 @@ p {
   margin: 4px 0;
 }
 
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.swipe-wrap .card {
+  margin-bottom: 0;
+}
+
+.swipe-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 96px;
+  margin: 0;
+  border-radius: 0;
+  background: linear-gradient(160deg, var(--gold-bright), var(--gold));
+  color: #1a1408;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.swipe-content {
+  position: relative;
+  background: var(--ink);
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.15s ease;
+}
+
 .status {
   display: inline-block;
   font-size: 11px;

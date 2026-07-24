@@ -46,6 +46,7 @@ Deno.serve(async (req) => {
         .from("slots")
         .select("*, bookings(*)")
         .eq("master_id", masterId)
+        .is("archived_at", null)
         .order("starts_at", { ascending: true });
       if (error) return json({ error: error.message }, 500);
       return json({ slots });
@@ -91,6 +92,27 @@ Deno.serve(async (req) => {
       }
       await supabase.from("slots").update({ status: "cancelled" }).eq("id", slot_id);
       await logEvent({ slot_id, actor_telegram_id: masterId, action: "slot_cancelled" });
+      return json({ ok: true });
+    }
+
+    case "archive_slot": {
+      // Archiving only hides a cancelled slot from the default list —
+      // the row (and its event log) stays in the database. Deleting it
+      // outright would undercut the whole point of the app: turning an
+      // agreement into a fact both sides can still point back to.
+      const { slot_id } = payload ?? {};
+      const { data: slot } = await supabase
+        .from("slots")
+        .select("id, status")
+        .eq("id", slot_id)
+        .eq("master_id", masterId)
+        .maybeSingle();
+      if (!slot) return json({ error: "not_found" }, 404);
+      if (slot.status !== "cancelled") {
+        return json({ error: "only a cancelled slot can be archived" }, 409);
+      }
+      await supabase.from("slots").update({ archived_at: new Date().toISOString() }).eq("id", slot_id);
+      await logEvent({ slot_id, actor_telegram_id: masterId, action: "slot_archived" });
       return json({ ok: true });
     }
 

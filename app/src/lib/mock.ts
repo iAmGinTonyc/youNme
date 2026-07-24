@@ -19,31 +19,31 @@ const newId = () => String(nextId++);
 let slots: Slot[] = [
   {
     id: "s1", master_id: MASTER_ID, starts_at: inHours(26), duration_minutes: 90,
-    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open", is_paid: false, price_stars: null,
+    location: "Студия на Тверской", note: "Портфолио, вечерний образ", status: "open", is_paid: false, price_stars: null, archived_at: null,
     created_at: inHours(-2), bookings: [],
   },
   {
     id: "s2", master_id: MASTER_ID, starts_at: inHours(50), duration_minutes: 60,
-    location: "Студия на Тверской", note: null, status: "booked", is_paid: false, price_stars: null, created_at: inHours(-5),
+    location: "Студия на Тверской", note: null, status: "booked", is_paid: false, price_stars: null, archived_at: null, created_at: inHours(-5),
     bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-4) }],
   },
   {
     id: "s3", master_id: MASTER_ID, starts_at: inHours(-20), duration_minutes: 60,
-    location: null, note: null, status: "completed", is_paid: false, price_stars: null, created_at: inHours(-40),
+    location: null, note: null, status: "completed", is_paid: false, price_stars: null, archived_at: null, created_at: inHours(-40),
     bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-39) }],
   },
   {
     id: "s4", master_id: MASTER_ID, starts_at: inHours(-5), duration_minutes: 60,
-    location: "Выезд", note: null, status: "cancelled", is_paid: false, price_stars: null, created_at: inHours(-30), bookings: [],
+    location: "Выезд", note: null, status: "cancelled", is_paid: false, price_stars: null, archived_at: null, created_at: inHours(-30), bookings: [],
   },
   {
     id: "s5", master_id: MASTER_ID, starts_at: inHours(72), duration_minutes: 120,
-    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open", is_paid: true, price_stars: 300,
+    location: "Студия на Тверской", note: "Тестовая съёмка для портфолио", status: "open", is_paid: true, price_stars: 300, archived_at: null,
     created_at: inHours(-1), bookings: [],
   },
   {
     id: "s6", master_id: MASTER_ID, starts_at: inHours(-3), duration_minutes: 60,
-    location: "Студия на Тверской", note: null, status: "booked", is_paid: true, price_stars: 150,
+    location: "Студия на Тверской", note: null, status: "booked", is_paid: true, price_stars: 150, archived_at: null,
     created_at: inHours(-30),
     bookings: [{
       id: "b3", slot_id: "s6", model_telegram_id: MODEL_ID, model_name: "Ты", status: "confirmed",
@@ -91,7 +91,7 @@ export const mockIdentity = {
 
 export const mockApi = {
   async masterList() {
-    return { slots: slots.map(withBookings) };
+    return { slots: slots.filter((s) => !s.archived_at).map(withBookings) };
   },
   async masterCreateSlot(payload: {
     starts_at: string; duration_minutes: number; location?: string; note?: string; is_paid?: boolean; price_stars?: number;
@@ -99,7 +99,7 @@ export const mockApi = {
     const slot: Slot = {
       id: newId(), master_id: MASTER_ID, status: "open", created_at: new Date().toISOString(), bookings: [],
       location: payload.location ?? null, note: payload.note ?? null, is_paid: Boolean(payload.is_paid),
-      price_stars: payload.is_paid ? payload.price_stars ?? null : null,
+      price_stars: payload.is_paid ? payload.price_stars ?? null : null, archived_at: null,
       starts_at: payload.starts_at, duration_minutes: payload.duration_minutes,
     };
     slots = [...slots, slot].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
@@ -107,6 +107,10 @@ export const mockApi = {
   },
   async masterCancelSlot(slotId: string) {
     slots = slots.map((s) => (s.id === slotId ? { ...s, status: "cancelled" } : s));
+    return { ok: true as const };
+  },
+  async masterArchiveSlot(slotId: string) {
+    slots = slots.map((s) => (s.id === slotId ? { ...s, archived_at: new Date().toISOString() } : s));
     return { ok: true as const };
   },
   async masterCancelBooking(bookingId: string) {
