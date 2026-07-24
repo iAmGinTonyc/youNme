@@ -209,6 +209,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
                 <button className="secondary" disabled={busy} onClick={() => withBusy(() => masterMarkNoShow(initData, activeBooking.id))}>
                   Не пришли
                 </button>
+                {slot.is_paid && <p className="meta">При отмене вами депозит вернётся клиенту.</p>}
                 <button className="secondary" disabled={busy} onClick={() => withBusy(() => masterCancelBooking(initData, activeBooking.id))}>
                   Отменить бронь
                 </button>

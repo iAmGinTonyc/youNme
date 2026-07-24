@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       const { booking_id, reason } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, slot_id, status, slots!inner(master_id)")
+        .select("id, slot_id, status, model_telegram_id, telegram_payment_charge_id, slots!inner(master_id)")
         .eq("id", booking_id)
         .eq("slots.master_id", masterId)
         .maybeSingle();
@@ -141,6 +141,26 @@ Deno.serve(async (req) => {
         action: "booking_cancelled_by_master",
         details: { reason: reason ?? null },
       });
+
+      if (booking.telegram_payment_charge_id) {
+        // Master's call to back out — not the client's fault, so unlike
+        // a client-initiated cancel or a no-show, the deposit goes back.
+        await callTelegramApi(BOT_TOKEN, "refundStarPayment", {
+          user_id: booking.model_telegram_id,
+          telegram_payment_charge_id: booking.telegram_payment_charge_id,
+        }).catch(() => {});
+        await callTelegramApi(BOT_TOKEN, "sendMessage", {
+          chat_id: booking.model_telegram_id,
+          text: "Мастер отменил запись — депозит возвращён ⭐",
+        }).catch(() => {});
+        await logEvent({
+          slot_id: booking.slot_id,
+          booking_id,
+          actor_telegram_id: masterId,
+          action: "deposit_refunded_master_cancel",
+        });
+      }
+
       return json({ ok: true });
     }
 

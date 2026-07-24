@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       const { booking_id, reason } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, slot_id, status")
+        .select("id, slot_id, status, telegram_payment_charge_id")
         .eq("id", booking_id)
         .eq("model_telegram_id", user.id)
         .maybeSingle();
@@ -180,6 +180,19 @@ Deno.serve(async (req) => {
         action: "booking_cancelled_by_model",
         details: { reason: reason ?? null },
       });
+
+      if (booking.telegram_payment_charge_id) {
+        // Client's own choice to back out — deposit stays with the
+        // master, same as a no-show. No refundStarPayment call; the
+        // absence of one is the forfeiture. Just make it an explicit,
+        // logged fact rather than silence.
+        await logEvent({
+          slot_id: booking.slot_id,
+          booking_id,
+          actor_telegram_id: user.id,
+          action: "deposit_forfeited_client_cancel",
+        });
+      }
       return json({ ok: true });
     }
 

@@ -88,6 +88,9 @@ export default function ClientView({ identity }: { identity: { name: string } })
               </button>
             ) : null
           )}
+          {booking.status === "confirmed" && booking.slots?.is_paid && (
+            <p className="meta">При отмене вами депозит не возвращается.</p>
+          )}
           {booking.status === "confirmed" && (
             <button className="secondary" disabled={busy} onClick={() => withBusy(() => clientCancelBooking(initData, booking.id))}>
               Отменить бронь
