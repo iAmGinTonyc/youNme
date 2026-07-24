@@ -31,14 +31,26 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
-async function sendMessage(chatId: number, text: string) {
+interface SentMessage {
+  message_id: number;
+}
+
+async function sendMessage(chatId: number, text: string, withAppButton = false): Promise<SentMessage | undefined> {
   const body: Record<string, unknown> = { chat_id: chatId, text };
-  if (MINI_APP_URL) {
+  if (withAppButton && MINI_APP_URL) {
     body.reply_markup = {
       inline_keyboard: [[{ text: "Открыть приложение", web_app: { url: MINI_APP_URL } }]],
     };
   }
-  await callTelegramApi(BOT_TOKEN, "sendMessage", body).catch(() => {});
+  return await callTelegramApi<SentMessage>(BOT_TOKEN, "sendMessage", body).catch(() => undefined);
+}
+
+async function pinMessage(chatId: number, messageId: number) {
+  await callTelegramApi(BOT_TOKEN, "pinChatMessage", {
+    chat_id: chatId,
+    message_id: messageId,
+    disable_notification: true,
+  }).catch(() => {});
 }
 
 function parseSlotId(invoicePayload: string | undefined): string | null {
@@ -93,7 +105,7 @@ Deno.serve(async (req) => {
         user_id: payer.id,
         telegram_payment_charge_id: chargeId,
       }).catch(() => {});
-      await sendMessage(message.chat.id, "Слот только что забронировали — звёзды возвращены.");
+      await sendMessage(message.chat.id, "Слот только что забронировали — звёзды возвращены.", true);
       await logEvent({ slot_id: slotId ?? undefined, actor_telegram_id: payer.id, action: "payment_refunded_race" });
       return json({ ok: true });
     }
@@ -116,7 +128,7 @@ Deno.serve(async (req) => {
       action: "booking_paid",
       details: { amount: payment.total_amount },
     });
-    await sendMessage(message.chat.id, "Оплата прошла, бронь подтверждена ✅");
+    await sendMessage(message.chat.id, "Оплата прошла, бронь подтверждена ✅", true);
     return json({ ok: true });
   }
 
@@ -124,7 +136,12 @@ Deno.serve(async (req) => {
     const greeting = MINI_APP_URL
       ? "Привет! Нажми на кнопку ниже, чтобы открыть приложение."
       : "Привет! Приложение скоро будет доступно.";
-    await sendMessage(message.chat.id, greeting);
+    const sent = await sendMessage(message.chat.id, greeting, true);
+    if (sent) await pinMessage(message.chat.id, sent.message_id);
+  }
+
+  if (message?.text === "/app") {
+    await sendMessage(message.chat.id, "Открыть приложение:", true);
   }
 
   return json({ ok: true });
