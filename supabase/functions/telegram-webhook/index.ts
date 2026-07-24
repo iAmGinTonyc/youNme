@@ -11,6 +11,13 @@
 // the slot as a last-resort safety net (in case two pre-checkouts both
 // got approved in a tight race); if the claim fails here, the user was
 // already charged, so we refund rather than just erroring out.
+//
+// DEPLOY NOTE: Telegram calls this URL directly and never sends a
+// Supabase Authorization header, so it must be deployed with
+// --no-verify-jwt or every update (including pre_checkout_query) gets
+// rejected 401 at the platform gateway before this code ever runs —
+// Telegram then shows the user "the bot did not respond in time".
+//   supabase functions deploy telegram-webhook --no-verify-jwt --project-ref <ref>
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { handleOptions, json } from "../_shared/http.ts";
 import { callTelegramApi } from "../_shared/telegram.ts";
