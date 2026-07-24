@@ -19,6 +19,14 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "завершено",
 };
 
+const BOOKING_STATUS_LABEL: Record<string, string> = {
+  confirmed: "подтверждено",
+  cancelled_by_model: "отменено клиентом",
+  cancelled_by_master: "отменено вами",
+  no_show: "неявка",
+  completed: "завершено",
+};
+
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
 }
@@ -140,9 +148,12 @@ export default function MasterView({ identity }: { identity: { name: string } })
             )}
             {pastBooking && (
               <div className="meta">
-                {pastBooking.model_name ?? pastBooking.model_telegram_id} — {STATUS_LABEL[pastBooking.status] ?? pastBooking.status}
+                {pastBooking.model_name ?? pastBooking.model_telegram_id} — {BOOKING_STATUS_LABEL[pastBooking.status] ?? pastBooking.status}
                 {pastBooking.cancel_reason ? `: ${pastBooking.cancel_reason}` : ""}
               </div>
+            )}
+            {pastBooking?.status === "no_show" && slot.is_paid && (
+              <div className="meta">Депозит удержан ⭐{slot.price_stars}</div>
             )}
 
             {slot.status === "open" && (

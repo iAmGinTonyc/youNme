@@ -9,6 +9,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyInitData } from "../_shared/verifyInitData.ts";
 import { handleOptions, json } from "../_shared/http.ts";
 import { finalizeIfBothConfirmed } from "../_shared/finalizeBooking.ts";
+import { callTelegramApi } from "../_shared/telegram.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const supabase = createClient(
@@ -121,11 +122,15 @@ Deno.serve(async (req) => {
     }
 
     case "mark_no_show": {
-      // Deposit stays put on a no-show — it's not returned automatically.
+      // No dispute process yet: a no-show just forfeits the deposit —
+      // we don't call refundStarPayment, so it stays where it already
+      // sits (the bot's Stars balance). This makes that outcome an
+      // explicit, logged fact instead of silence, and tells the client
+      // directly rather than leaving them to wonder.
       const { booking_id } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, slot_id, status, slots!inner(master_id)")
+        .select("id, slot_id, status, model_telegram_id, slots!inner(master_id, is_paid, price_stars)")
         .eq("id", booking_id)
         .eq("slots.master_id", masterId)
         .maybeSingle();
@@ -135,6 +140,22 @@ Deno.serve(async (req) => {
       await supabase.from("bookings").update({ status: "no_show" }).eq("id", booking_id);
       await supabase.from("slots").update({ status: "completed" }).eq("id", booking.slot_id);
       await logEvent({ slot_id: booking.slot_id, booking_id, actor_telegram_id: masterId, action: "booking_marked_no_show" });
+
+      const slotInfo = booking.slots as unknown as { is_paid: boolean; price_stars: number | null };
+      if (slotInfo.is_paid) {
+        await logEvent({
+          slot_id: booking.slot_id,
+          booking_id,
+          actor_telegram_id: masterId,
+          action: "deposit_forfeited",
+          details: { amount: slotInfo.price_stars },
+        });
+        await callTelegramApi(BOT_TOKEN, "sendMessage", {
+          chat_id: booking.model_telegram_id,
+          text: `Мастер отметил, что вы не пришли на запись — депозит ${slotInfo.price_stars ?? ""}⭐ не возвращается.`,
+        }).catch(() => {});
+      }
+
       return json({ ok: true });
     }
 

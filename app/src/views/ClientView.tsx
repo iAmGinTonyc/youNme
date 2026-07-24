@@ -75,6 +75,9 @@ export default function ClientView({ identity }: { identity: { name: string } })
           )}
           {booking.slots && <time>{formatDateTime(booking.slots.starts_at)}</time>}
           {booking.slots?.location && <div className="meta">{booking.slots.location}</div>}
+          {booking.status === "no_show" && booking.slots?.is_paid && (
+            <p className="meta">Депозит не возвращён — мастер отметил неявку.</p>
+          )}
           {booking.status === "confirmed" && booking.slots?.is_paid && (
             booking.client_confirmed_at ? (
               <p className="meta">Вы подтвердили. Ждём подтверждения от мастера — депозит вернётся автоматически.</p>
