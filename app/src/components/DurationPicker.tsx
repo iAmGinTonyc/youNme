@@ -1,11 +1,11 @@
 import { useState } from "react";
-import ChipScroller from "./ChipScroller";
 
-const OPTIONS = [30, 60, 90, 120];
+const OPTIONS = Array.from({ length: 24 }, (_, i) => (i + 1) * 30); // 0,5ч..12ч in 0,5ч steps
 
 function formatDuration(mins: number) {
   const hours = mins / 60;
-  return `${hours % 1 === 0 ? hours : String(hours).replace(".", ",")}ч`;
+  const label = hours % 1 === 0 ? String(hours) : String(hours).replace(".", ",");
+  return `${label} ч`;
 }
 
 export default function DurationPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -19,5 +19,18 @@ export default function DurationPicker({ value, onChange }: { value: number; onC
     );
   }
 
-  return <ChipScroller options={OPTIONS} value={value} onChange={onChange} format={formatDuration} stretch />;
+  return (
+    <div className="duration-grid">
+      {OPTIONS.map((opt) => (
+        <button
+          type="button"
+          key={opt}
+          className={"chip duration-chip" + (opt === value ? " selected" : "")}
+          onClick={() => onChange(opt)}
+        >
+          {formatDuration(opt)}
+        </button>
+      ))}
+    </div>
+  );
 }

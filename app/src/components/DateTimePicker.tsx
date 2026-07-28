@@ -36,6 +36,7 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
   const [viewDate, setViewDate] = useState(parsed.date ?? new Date());
   const [hour, setHour] = useState(parsed.hour);
   const [minute, setMinute] = useState(parsed.minute);
+  const [timeChosen, setTimeChosen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
   function changeTime(h: number, mi: number) {
     setHour(h);
     setMinute(mi);
+    setTimeChosen(true);
     if (selected) onChange(toLocalIso(selected, h, mi));
   }
 
@@ -143,10 +145,15 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
                 </div>
               </div>
             ))}
-            <button type="button" className="secondary datepicker-done" onClick={() => setOpen(false)}>
-              Готово
-            </button>
           </div>
+        </div>
+      )}
+
+      {open && selected && timeChosen && (
+        <div className="datepicker-confirm-bar">
+          <button type="button" onClick={() => setOpen(false)}>
+            Подтвердить
+          </button>
         </div>
       )}
     </div>

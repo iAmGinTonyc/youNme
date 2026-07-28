@@ -365,40 +365,25 @@ input:focus, textarea:focus {
   margin-bottom: 6px;
 }
 
-.datepicker-done {
-  align-self: flex-end;
-  margin-top: 4px;
-}
-
-.chip-scroller {
-  position: relative;
-}
-
-.chip-row {
+.datepicker-confirm-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding: 2px 1px;
-  scrollbar-width: none;
+  justify-content: center;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(0deg, var(--ink) 55%, transparent);
 }
 
-.chip-row::-webkit-scrollbar {
-  display: none;
-}
-
-.chip-row.stretch {
-  overflow-x: visible;
-}
-
-.chip.stretch {
-  flex: 1 1 0;
-  min-width: 0;
+.datepicker-confirm-bar button {
+  width: 100%;
+  max-width: 480px;
+  margin: 0;
 }
 
 .chip {
-  flex: 0 0 auto;
-  min-width: 56px;
   height: 50px;
   padding: 0 10px;
   margin: 0;
@@ -424,70 +409,16 @@ input:focus, textarea:focus {
   font-weight: 700;
 }
 
-.chip-arrow {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 32px;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, var(--panel) 40%, transparent);
-  color: var(--gold-bright);
-  border: none;
-  border-radius: 0;
-  z-index: 5;
-  font-size: 17px;
+.duration-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 
-.chip-arrow.right {
-  right: 0;
-  background: linear-gradient(270deg, var(--panel) 40%, transparent);
-}
-
-.chip-arrow.left {
-  left: 0;
-}
-
-.chip-scroller.vertical {
-  width: 100%;
-}
-
-.chip-row.vertical {
-  flex-direction: column;
-  overflow-x: hidden;
-  overflow-y: auto;
-  max-height: 172px;
-  padding: 2px;
-}
-
-.chip.vertical {
-  width: 100%;
-  min-width: 0;
-  height: 50px;
-  font-size: 16px;
-}
-
-.chip-arrow.up,
-.chip-arrow.down {
-  top: auto;
-  bottom: auto;
-  left: 0;
-  right: 0;
-  width: auto;
-  height: 24px;
-}
-
-.chip-arrow.up {
-  top: 0;
-  background: linear-gradient(180deg, var(--panel) 55%, transparent);
-}
-
-.chip-arrow.down {
-  bottom: 0;
-  background: linear-gradient(0deg, var(--panel) 55%, transparent);
+.duration-chip {
+  height: 42px;
+  padding: 0 2px;
+  font-size: 12px;
 }
 
 .checkbox-row {
