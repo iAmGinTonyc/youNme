@@ -15,8 +15,8 @@ import {
 } from "../lib/api";
 
 const STATUS_LABEL: Record<string, string> = {
-  open: "свободно",
-  booked: "забронировано",
+  open: "запланировано",
+  booked: "подтверждено",
   cancelled: "отменено",
   completed: "завершено",
 };
@@ -126,14 +126,14 @@ export default function MasterView({ identity }: { identity: { name: string } })
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          placeholder="Место (необязательно)"
+          placeholder="Адрес (необязательно)"
         />
         <input
           type="number"
           min={0}
           value={depositStars}
           onChange={(e) => setDepositStars(e.target.value)}
-          placeholder="Депозит (необязательно)"
+          placeholder="Депозит"
         />
         <textarea
           value={note}
