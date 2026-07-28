@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import ChipScroller from "./ChipScroller";
 
 const MONTHS = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
   "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
 ];
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-const HOURS = Array.from({ length: 24 }, (_, h) => h);
-const MINUTE_STEPS = [0, 15, 30, 45];
+const MINUTE_STEPS = [0, 10, 20, 30, 40, 50];
+const PERIODS: { label: string; startHour: number; endHour: number }[] = [
+  { label: "Ночь", startHour: 0, endHour: 5 },
+  { label: "Утро", startHour: 6, endHour: 11 },
+  { label: "День", startHour: 12, endHour: 17 },
+  { label: "Вечер", startHour: 18, endHour: 23 },
+];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -50,14 +54,10 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
     setViewDate(day);
   }
 
-  function changeHour(h: number) {
+  function changeTime(h: number, mi: number) {
     setHour(h);
-    if (selected) onChange(toLocalIso(selected, h, minute));
-  }
-
-  function changeMinute(mi: number) {
     setMinute(mi);
-    if (selected) onChange(toLocalIso(selected, hour, mi));
+    if (selected) onChange(toLocalIso(selected, h, mi));
   }
 
   const year = viewDate.getFullYear();
@@ -125,16 +125,25 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
           </div>
 
           <div className="datepicker-time">
-            <div className="time-columns">
-              <div className="time-column">
-                <span className="time-label">Часы</span>
-                <ChipScroller options={HOURS} value={hour} onChange={changeHour} format={pad} orientation="vertical" />
+            {PERIODS.map(({ label, startHour, endHour }) => (
+              <div className="time-period" key={label}>
+                <span className="time-period-label">{label}</span>
+                <div className="time-slot-grid">
+                  {Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i).flatMap((h) =>
+                    MINUTE_STEPS.map((mi) => (
+                      <button
+                        type="button"
+                        key={`${h}:${mi}`}
+                        className={"chip time-slot" + (hour === h && minute === mi ? " selected" : "")}
+                        onClick={() => changeTime(h, mi)}
+                      >
+                        {pad(h)}:{pad(mi)}
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-              <div className="time-column">
-                <span className="time-label">Минуты</span>
-                <ChipScroller options={MINUTE_STEPS} value={minute} onChange={changeMinute} format={pad} orientation="vertical" />
-              </div>
-            </div>
+            ))}
             <button type="button" className="secondary datepicker-done" onClick={() => setOpen(false)}>
               Готово
             </button>

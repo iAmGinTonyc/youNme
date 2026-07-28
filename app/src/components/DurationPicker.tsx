@@ -8,5 +8,10 @@ function formatDuration(mins: number) {
 }
 
 export default function DurationPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return <ChipScroller options={OPTIONS} value={value} onChange={onChange} format={formatDuration} />;
+  return (
+    <div>
+      <span className="time-label">Выберите время длительности</span>
+      <ChipScroller options={OPTIONS} value={value} onChange={onChange} format={formatDuration} />
+    </div>
+  );
 }

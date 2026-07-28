@@ -324,23 +324,36 @@ input:focus, textarea:focus {
 .datepicker-time {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--hairline);
+  max-height: 280px;
+  overflow-y: auto;
 }
 
-.time-columns {
-  display: flex;
-  gap: 12px;
+.time-period-label {
+  display: block;
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  font-size: 14px;
+  color: var(--ivory);
+  margin: 12px 0 6px;
 }
 
-.time-column {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+.time-period:first-child .time-period-label {
+  margin-top: 0;
+}
+
+.time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
+}
+
+.time-slot {
+  height: 42px;
+  font-size: 13px;
+  min-width: 0;
 }
 
 .time-label {
@@ -349,6 +362,7 @@ input:focus, textarea:focus {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ivory-dim);
+  margin-bottom: 6px;
 }
 
 .datepicker-done {
