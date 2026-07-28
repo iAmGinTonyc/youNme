@@ -146,14 +146,14 @@ export default function DateTimePicker({ value, onChange }: { value: string; onC
               </div>
             ))}
           </div>
-        </div>
-      )}
 
-      {open && selected && timeChosen && (
-        <div className="datepicker-confirm-bar">
-          <button type="button" onClick={() => setOpen(false)}>
-            Подтвердить
-          </button>
+          {selected && timeChosen && (
+            <div className="datepicker-confirm-bar">
+              <button type="button" onClick={() => setOpen(false)}>
+                Подтвердить
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
