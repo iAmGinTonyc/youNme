@@ -5,7 +5,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyInitData } from "../_shared/verifyInitData.ts";
 import { handleOptions, json } from "../_shared/http.ts";
-import { callTelegramApi } from "../_shared/telegram.ts";
 import { finalizeIfBothConfirmed } from "../_shared/finalizeBooking.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
@@ -77,12 +76,8 @@ Deno.serve(async (req) => {
       const { slot_id } = payload ?? {};
       if (!slot_id) return json({ error: "slot_id is required" }, 400);
 
-      // Paid slots go through create_invoice + Telegram's payment flow
-      // instead — this direct path stays blocked for them server-side,
-      // not just hidden in the UI.
-      const { data: slotCheck } = await supabase.from("slots").select("is_paid").eq("id", slot_id).maybeSingle();
+      const { data: slotCheck } = await supabase.from("slots").select("id").eq("id", slot_id).maybeSingle();
       if (!slotCheck) return json({ error: "not_found" }, 404);
-      if (slotCheck.is_paid) return json({ error: "payment_required" }, 402);
 
       // Atomic claim: only succeeds if the slot is still open, so two
       // models racing for the same slot can't both win.
@@ -116,32 +111,6 @@ Deno.serve(async (req) => {
       return json({ booking });
     }
 
-    case "create_invoice": {
-      const { slot_id } = payload ?? {};
-      if (!slot_id) return json({ error: "slot_id is required" }, 400);
-
-      const { data: slot } = await supabase
-        .from("slots")
-        .select("id, status, is_paid, price_stars, starts_at, duration_minutes")
-        .eq("id", slot_id)
-        .maybeSingle();
-      if (!slot) return json({ error: "not_found" }, 404);
-      if (!slot.is_paid || !slot.price_stars) return json({ error: "not_a_paid_slot" }, 400);
-      if (slot.status !== "open") return json({ error: "slot_no_longer_available" }, 409);
-
-      const invoiceUrl = await callTelegramApi<string>(BOT_TOKEN, "createInvoiceLink", {
-        title: "Платная бронь",
-        description: `Запись на ${
-          new Date(slot.starts_at).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" })
-        }, ${slot.duration_minutes} мин`,
-        payload: `book:${slot.id}`,
-        currency: "XTR",
-        prices: [{ label: "Бронь", amount: slot.price_stars }],
-      });
-
-      return json({ invoice_url: invoiceUrl });
-    }
-
     case "confirm_completed": {
       const { booking_id } = payload ?? {};
       const { data: booking } = await supabase
@@ -169,7 +138,7 @@ Deno.serve(async (req) => {
       const { booking_id, reason } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, slot_id, status, telegram_payment_charge_id")
+        .select("id, slot_id, status, slots!inner(is_paid)")
         .eq("id", booking_id)
         .eq("model_telegram_id", user.id)
         .maybeSingle();
@@ -190,11 +159,11 @@ Deno.serve(async (req) => {
         details: { reason: reason ?? null },
       });
 
-      if (booking.telegram_payment_charge_id) {
-        // Client's own choice to back out — deposit stays with the
-        // master, same as a no-show. No refundStarPayment call; the
-        // absence of one is the forfeiture. Just make it an explicit,
-        // logged fact rather than silence.
+      const slotInfo = booking.slots as unknown as { is_paid: boolean };
+      if (slotInfo.is_paid) {
+        // Client's own choice to back out — deposit obligation stays in
+        // place, same as a no-show. Just make it an explicit, logged
+        // fact rather than silence.
         await logEvent({
           slot_id: booking.slot_id,
           booking_id,

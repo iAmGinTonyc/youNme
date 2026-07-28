@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getInitData } from "../lib/telegram";
 import { Booking, Slot, clientBookSlot, clientCancelBooking, clientConfirmCompleted, clientList } from "../lib/api";
-import { payForSlot } from "../lib/payment";
 
 const STATUS_LABEL: Record<string, string> = {
   confirmed: "подтверждено",
@@ -47,19 +46,6 @@ export default function ClientView({ identity }: { identity: { name: string } })
     }
   }
 
-  async function handlePay(slot: Slot) {
-    setBusy(true);
-    setError(null);
-    try {
-      const status = await payForSlot(initData, slot.id);
-      if (status === "paid") await refresh();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <div>
       <h1>Привет, {identity.name}</h1>
@@ -72,7 +58,7 @@ export default function ClientView({ identity }: { identity: { name: string } })
         <div className="card" key={booking.id}>
           <span className="status">{STATUS_LABEL[booking.status] ?? booking.status}</span>
           {booking.slots?.is_paid && (
-            <span className="badge-paid">Оплачено⭐️{booking.slots.price_stars ? ` · ${booking.slots.price_stars}` : ""}</span>
+            <span className="badge-paid">Депозит{booking.slots.price_stars ? ` · ${booking.slots.price_stars}` : ""}</span>
           )}
           {booking.slots && <time>{formatDateTime(booking.slots.starts_at)}</time>}
           {booking.slots?.location && <div className="meta">{booking.slots.location}</div>}
@@ -104,22 +90,16 @@ export default function ClientView({ identity }: { identity: { name: string } })
       {openSlots.map((slot) => (
         <div className="card" key={slot.id}>
           {slot.is_private && <span className="badge-private">Личное предложение</span>}
-          {slot.is_paid && <span className="badge-paid">Платная бронь⭐️{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
+          {slot.is_paid && <span className="badge-paid">Депозит{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
           <time>{formatDateTime(slot.starts_at)}</time>
           <div className="meta">
             {slot.duration_minutes} мин
             {slot.location ? ` · ${slot.location}` : ""}
           </div>
           {slot.note && <div className="meta">{slot.note}</div>}
-          {slot.is_paid ? (
-            <button disabled={busy} onClick={() => handlePay(slot)}>
-              Оплатить {slot.price_stars} ⭐
-            </button>
-          ) : (
-            <button disabled={busy} onClick={() => withBusy(() => clientBookSlot(initData, slot.id))}>
-              Забронировать
-            </button>
-          )}
+          <button disabled={busy} onClick={() => withBusy(() => clientBookSlot(initData, slot.id))}>
+            Забронировать
+          </button>
         </div>
       ))}
     </div>

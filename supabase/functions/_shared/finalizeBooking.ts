@@ -26,22 +26,16 @@ export async function finalizeIfBothConfirmed(
 
   await supabase.from("slots").update({ status: "completed" }).eq("id", slotId);
 
-  if (finalized.telegram_payment_charge_id) {
-    await callTelegramApi(botToken, "refundStarPayment", {
-      user_id: finalized.model_telegram_id,
-      telegram_payment_charge_id: finalized.telegram_payment_charge_id,
-    }).catch(() => {});
-    await callTelegramApi(botToken, "sendMessage", {
-      chat_id: finalized.model_telegram_id,
-      text: "Обе стороны подтвердили, что запись состоялась — депозит возвращён ⭐",
-    }).catch(() => {});
-  }
+  await callTelegramApi(botToken, "sendMessage", {
+    chat_id: finalized.model_telegram_id,
+    text: "Обе стороны подтвердили, что запись состоялась.",
+  }).catch(() => {});
 
   await supabase.from("events").insert({
     slot_id: slotId,
     booking_id: bookingId,
     actor_telegram_id: finalized.model_telegram_id,
     actor_role: "system",
-    action: "deposit_refunded",
+    action: "booking_finalized",
   });
 }

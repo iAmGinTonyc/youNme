@@ -139,7 +139,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
           min={0}
           value={depositStars}
           onChange={(e) => setDepositStars(e.target.value)}
-          placeholder="Депозит, ⭐ (необязательно)"
+          placeholder="Депозит (необязательно)"
         />
         {PUBLIC_SLOTS_ENABLED && (
           <label className="checkbox-row">
@@ -188,7 +188,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
           <div className="card">
             <span className="status">{STATUS_LABEL[slot.status]}</span>
             {slot.is_private && <span className="badge-private">Личная запись</span>}
-            {slot.is_paid && <span className="badge-paid">Платная бронь⭐️{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
+            {slot.is_paid && <span className="badge-paid">Депозит{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
               {slot.duration_minutes} мин
@@ -206,7 +206,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
               </div>
             )}
             {pastBooking?.status === "no_show" && slot.is_paid && (
-              <div className="meta">Депозит удержан ⭐{slot.price_stars}</div>
+              <div className="meta">Депозит удержан{slot.price_stars ? ` · ${slot.price_stars}` : ""}</div>
             )}
 
             {slot.status === "open" && slot.is_private && (

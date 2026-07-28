@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       const { booking_id, reason } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, slot_id, status, model_telegram_id, telegram_payment_charge_id, slots!inner(master_id)")
+        .select("id, slot_id, status, model_telegram_id, slots!inner(master_id, is_paid)")
         .eq("id", booking_id)
         .eq("slots.master_id", masterId)
         .maybeSingle();
@@ -142,22 +142,20 @@ Deno.serve(async (req) => {
         details: { reason: reason ?? null },
       });
 
-      if (booking.telegram_payment_charge_id) {
+      const slotInfo = booking.slots as unknown as { is_paid: boolean };
+      if (slotInfo.is_paid) {
         // Master's call to back out — not the client's fault, so unlike
-        // a client-initiated cancel or a no-show, the deposit goes back.
-        await callTelegramApi(BOT_TOKEN, "refundStarPayment", {
-          user_id: booking.model_telegram_id,
-          telegram_payment_charge_id: booking.telegram_payment_charge_id,
-        }).catch(() => {});
+        // a client-initiated cancel or a no-show, the deposit obligation
+        // is released rather than forfeited.
         await callTelegramApi(BOT_TOKEN, "sendMessage", {
           chat_id: booking.model_telegram_id,
-          text: "Мастер отменил запись — депозит возвращён ⭐",
+          text: "Мастер отменил запись — депозит не требуется.",
         }).catch(() => {});
         await logEvent({
           slot_id: booking.slot_id,
           booking_id,
           actor_telegram_id: masterId,
-          action: "deposit_refunded_master_cancel",
+          action: "deposit_waived_master_cancel",
         });
       }
 
@@ -166,10 +164,9 @@ Deno.serve(async (req) => {
 
     case "mark_no_show": {
       // No dispute process yet: a no-show just forfeits the deposit —
-      // we don't call refundStarPayment, so it stays where it already
-      // sits (the bot's Stars balance). This makes that outcome an
-      // explicit, logged fact instead of silence, and tells the client
-      // directly rather than leaving them to wonder.
+      // the obligation stays in place rather than being waived. This
+      // makes that outcome an explicit, logged fact instead of silence,
+      // and tells the client directly rather than leaving them to wonder.
       const { booking_id } = payload ?? {};
       const { data: booking } = await supabase
         .from("bookings")
@@ -195,7 +192,9 @@ Deno.serve(async (req) => {
         });
         await callTelegramApi(BOT_TOKEN, "sendMessage", {
           chat_id: booking.model_telegram_id,
-          text: `Мастер отметил, что вы не пришли на запись — депозит ${slotInfo.price_stars ?? ""}⭐ не возвращается.`,
+          text: `Мастер отметил, что вы не пришли на запись — депозит${
+            slotInfo.price_stars ? ` (${slotInfo.price_stars})` : ""
+          } не возвращается.`,
         }).catch(() => {});
       }
 

@@ -158,22 +158,9 @@ export const mockApi = {
     return { open_slots, my_bookings };
   },
   async clientBookSlot(slotId: string) {
-    const slot = slots.find((s) => s.id === slotId);
-    if (slot?.is_paid) throw new Error("payment_required");
     const booking: Booking = {
       id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
       status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null,
-      master_confirmed_at: null, client_confirmed_at: null,
-      created_at: new Date().toISOString(),
-    };
-    slots = slots.map((s) => (s.id === slotId ? { ...s, status: "booked", bookings: [...(s.bookings ?? []), booking] } : s));
-    return { booking };
-  },
-  async clientPaySlot(slotId: string) {
-    const booking: Booking = {
-      id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
-      status: "confirmed", cancel_reason: null, cancelled_at: null,
-      telegram_payment_charge_id: "mock_charge_" + newId(),
       master_confirmed_at: null, client_confirmed_at: null,
       created_at: new Date().toISOString(),
     };

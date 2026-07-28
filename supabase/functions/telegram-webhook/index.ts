@@ -1,16 +1,9 @@
-// Receives updates from Telegram (set via setWebhook): /start, and the
-// two payment events for Stars checkout. This is the only place a paid
-// booking actually gets confirmed — never on the client's say-so.
+// Receives updates from Telegram (set via setWebhook): /start and /app.
 //
-// pre_checkout_query: Telegram asks "is this still valid?" before it
-// charges anyone. We answer within the 10s window based on current slot
-// state — this is the real race-prevention gate, since it runs before
-// money moves.
-//
-// successful_payment: the charge already happened. We atomically claim
-// the slot as a last-resort safety net (in case two pre-checkouts both
-// got approved in a tight race); if the claim fails here, the user was
-// already charged, so we refund rather than just erroring out.
+// Stars-based payment handling (pre_checkout_query / successful_payment)
+// used to live here — removed along with the rest of the Stars mechanic
+// (see client/index.ts and master/index.ts) now that deposits are just
+// recorded data pending a real payment provider (ЮKassa) integration.
 //
 // DEPLOY NOTE: Telegram calls this URL directly and never sends a
 // Supabase Authorization header, so it must be deployed with
@@ -53,17 +46,6 @@ async function pinMessage(chatId: number, messageId: number) {
   }).catch(() => {});
 }
 
-function parseSlotId(invoicePayload: string | undefined): string | null {
-  if (!invoicePayload?.startsWith("book:")) return null;
-  return invoicePayload.slice("book:".length);
-}
-
-async function logEvent(
-  fields: { slot_id?: string; booking_id?: string; actor_telegram_id: number; action: string; details?: unknown },
-) {
-  await supabase.from("events").insert({ ...fields, actor_role: "model" });
-}
-
 Deno.serve(async (req) => {
   const optionsResponse = handleOptions(req);
   if (optionsResponse) return optionsResponse;
@@ -74,63 +56,7 @@ Deno.serve(async (req) => {
   }
 
   const update = await req.json().catch(() => null);
-
-  const preCheckout = update?.pre_checkout_query;
-  if (preCheckout) {
-    const slotId = parseSlotId(preCheckout.invoice_payload);
-    const { data: slot } = slotId
-      ? await supabase.from("slots").select("status, is_paid, price_stars").eq("id", slotId).maybeSingle()
-      : { data: null };
-
-    const valid = Boolean(slot && slot.is_paid && slot.status === "open" && slot.price_stars === preCheckout.total_amount);
-    await callTelegramApi(BOT_TOKEN, "answerPreCheckoutQuery", valid
-      ? { pre_checkout_query_id: preCheckout.id, ok: true }
-      : { pre_checkout_query_id: preCheckout.id, ok: false, error_message: "Этот слот больше недоступен." });
-    return json({ ok: true });
-  }
-
   const message = update?.message;
-  const payment = message?.successful_payment;
-  if (payment) {
-    const slotId = parseSlotId(payment.invoice_payload);
-    const payer = message.from;
-    const chargeId = payment.telegram_payment_charge_id as string;
-
-    const claimed = slotId
-      ? await supabase.from("slots").update({ status: "booked" }).eq("id", slotId).eq("status", "open").select().maybeSingle()
-      : { data: null };
-
-    if (!claimed.data) {
-      await callTelegramApi(BOT_TOKEN, "refundStarPayment", {
-        user_id: payer.id,
-        telegram_payment_charge_id: chargeId,
-      }).catch(() => {});
-      await sendMessage(message.chat.id, "Слот только что забронировали — звёзды возвращены.", MINI_APP_URL);
-      await logEvent({ slot_id: slotId ?? undefined, actor_telegram_id: payer.id, action: "payment_refunded_race" });
-      return json({ ok: true });
-    }
-
-    const { data: booking } = await supabase
-      .from("bookings")
-      .insert({
-        slot_id: slotId,
-        model_telegram_id: payer.id,
-        model_name: [payer.first_name, payer.last_name].filter(Boolean).join(" ") || payer.username,
-        telegram_payment_charge_id: chargeId,
-      })
-      .select()
-      .single();
-
-    await logEvent({
-      slot_id: slotId ?? undefined,
-      booking_id: booking?.id,
-      actor_telegram_id: payer.id,
-      action: "booking_paid",
-      details: { amount: payment.total_amount },
-    });
-    await sendMessage(message.chat.id, "Оплата прошла, бронь подтверждена ✅", MINI_APP_URL);
-    return json({ ok: true });
-  }
 
   if (message?.text?.startsWith("/start")) {
     const param = message.text.slice("/start".length).trim();

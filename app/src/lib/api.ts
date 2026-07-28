@@ -122,10 +122,6 @@ export function clientBookSlot(initData: string, slot_id: string) {
   return callFunction<{ booking: Booking }>("client", { initData, action: "book_slot", payload: { slot_id } });
 }
 
-export function clientCreateInvoice(initData: string, slot_id: string) {
-  return callFunction<{ invoice_url: string }>("client", { initData, action: "create_invoice", payload: { slot_id } });
-}
-
 export function clientConfirmCompleted(initData: string, booking_id: string) {
   if (import.meta.env.DEV && mockActive) return mockApi.clientConfirmCompleted(booking_id);
   return callFunction<{ ok: true }>("client", { initData, action: "confirm_completed", payload: { booking_id } });
