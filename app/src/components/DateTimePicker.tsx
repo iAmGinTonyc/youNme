@@ -7,8 +7,7 @@ const MONTHS = [
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const MINUTE_STEPS = [0, 10, 20, 30, 40, 50];
 const PERIODS: { label: string; startHour: number; endHour: number }[] = [
-  { label: "Ночь", startHour: 0, endHour: 5 },
-  { label: "Утро", startHour: 6, endHour: 11 },
+  { label: "Утро", startHour: 8, endHour: 11 },
   { label: "День", startHour: 12, endHour: 17 },
   { label: "Вечер", startHour: 18, endHour: 23 },
 ];
