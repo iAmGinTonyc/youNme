@@ -387,6 +387,15 @@ input:focus, textarea:focus {
   display: none;
 }
 
+.chip-row.stretch {
+  overflow-x: visible;
+}
+
+.chip.stretch {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .chip {
   flex: 0 0 auto;
   min-width: 56px;

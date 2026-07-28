@@ -11,7 +11,7 @@ export default function DurationPicker({ value, onChange }: { value: number; onC
   return (
     <div>
       <span className="time-label">Выберите время длительности</span>
-      <ChipScroller options={OPTIONS} value={value} onChange={onChange} format={formatDuration} />
+      <ChipScroller options={OPTIONS} value={value} onChange={onChange} format={formatDuration} stretch />
     </div>
   );
 }

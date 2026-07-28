@@ -6,12 +6,14 @@ export default function ChipScroller({
   onChange,
   format,
   orientation = "horizontal",
+  stretch = false,
 }: {
   options: number[];
   value: number;
   onChange: (v: number) => void;
   format?: (v: number) => string;
   orientation?: "horizontal" | "vertical";
+  stretch?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
@@ -68,12 +70,16 @@ export default function ChipScroller({
           {vertical ? "▲" : "‹"}
         </button>
       )}
-      <div className={"chip-row" + (vertical ? " vertical" : "")} ref={scrollRef} onScroll={updateArrows}>
+      <div
+        className={"chip-row" + (vertical ? " vertical" : "") + (stretch ? " stretch" : "")}
+        ref={scrollRef}
+        onScroll={updateArrows}
+      >
         {options.map((opt) => (
           <button
             type="button"
             key={opt}
-            className={"chip" + (vertical ? " vertical" : "") + (opt === value ? " selected" : "")}
+            className={"chip" + (vertical ? " vertical" : "") + (stretch ? " stretch" : "") + (opt === value ? " selected" : "")}
             onClick={() => onChange(opt)}
           >
             {format ? format(opt) : opt}
