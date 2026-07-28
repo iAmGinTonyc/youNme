@@ -32,15 +32,24 @@ Deno.serve(async (req) => {
     case "list": {
       const { slot_id } = payload ?? {};
 
-      const { data: openSlots, error: openError } = await supabase
-        .from("slots")
-        .select("*, masters(name)")
-        .eq("status", "open")
-        .eq("is_private", false)
-        .order("starts_at", { ascending: true });
-      if (openError) return json({ error: openError.message }, 500);
+      // Public browsing of open slots is parked for now — every booking
+      // is meant to be created and shared as a private link by the
+      // master. Left in place (not deleted) in case general discovery
+      // comes back later.
+      const PUBLIC_SLOTS_ENABLED = false;
 
-      let slots = openSlots ?? [];
+      let slots: Record<string, unknown>[] = [];
+      if (PUBLIC_SLOTS_ENABLED) {
+        const { data: openSlots, error: openError } = await supabase
+          .from("slots")
+          .select("*, masters(name)")
+          .eq("status", "open")
+          .eq("is_private", false)
+          .order("starts_at", { ascending: true });
+        if (openError) return json({ error: openError.message }, 500);
+        slots = openSlots ?? [];
+      }
+
       // A private slot is only ever surfaced when its own id is asked
       // for explicitly — i.e. by whoever opened the deep link the
       // master shared. It's excluded from the query above on purpose.

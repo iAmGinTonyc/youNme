@@ -18,6 +18,7 @@ interface TelegramWebApp {
   setBackgroundColor(color: string): void;
   setBottomBarColor(color: string): void;
   openInvoice(url: string, callback?: (status: "paid" | "cancelled" | "failed" | "pending") => void): void;
+  openTelegramLink(url: string): void;
 }
 
 interface Window {

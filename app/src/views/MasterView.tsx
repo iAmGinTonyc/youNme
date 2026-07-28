@@ -1,5 +1,5 @@
 import { Fragment, FormEvent, useEffect, useState } from "react";
-import { getInitData } from "../lib/telegram";
+import { getInitData, shareToTelegram } from "../lib/telegram";
 import DateTimePicker from "../components/DateTimePicker";
 import DurationPicker from "../components/DurationPicker";
 import SwipeToArchive from "../components/SwipeToArchive";
@@ -39,6 +39,10 @@ function slotShareLink(slotId: string) {
   return `https://t.me/${BOT_USERNAME}?start=slot_${slotId}`;
 }
 
+// Every slot is link-only for now — the "Личная запись" choice is parked,
+// not removed, in case general public discovery comes back later.
+const PUBLIC_SLOTS_ENABLED = false;
+
 export default function MasterView({ identity }: { identity: { name: string } }) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [busy, setBusy] = useState(false);
@@ -48,10 +52,10 @@ export default function MasterView({ identity }: { identity: { name: string } })
   const [duration, setDuration] = useState(60);
   const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
-  const [isPaid, setIsPaid] = useState(false);
-  const [priceStars, setPriceStars] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
+  const [depositStars, setDepositStars] = useState("");
+  const [isPrivate, setIsPrivate] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [newSlotId, setNewSlotId] = useState<string | null>(null);
 
   const initData = getInitData();
 
@@ -80,23 +84,22 @@ export default function MasterView({ identity }: { identity: { name: string } })
   function handleCreateSlot(e: FormEvent) {
     e.preventDefault();
     if (!startsAt) return;
-    if (isPaid && !(Number(priceStars) > 0)) return;
+    const deposit = Math.max(0, Number(depositStars) || 0);
     withBusy(async () => {
-      await masterCreateSlot(initData, {
+      const { slot } = await masterCreateSlot(initData, {
         starts_at: new Date(startsAt).toISOString(),
         duration_minutes: duration,
         location: location || undefined,
         note: note || undefined,
-        is_paid: isPaid,
-        price_stars: isPaid ? Number(priceStars) : undefined,
-        is_private: isPrivate,
+        is_paid: deposit > 0,
+        price_stars: deposit > 0 ? deposit : undefined,
+        is_private: PUBLIC_SLOTS_ENABLED ? isPrivate : true,
       });
       setStartsAt("");
       setLocation("");
       setNote("");
-      setIsPaid(false);
-      setPriceStars("");
-      setIsPrivate(false);
+      setDepositStars("");
+      setNewSlotId(slot.id);
     });
   }
 
@@ -115,7 +118,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
     <div>
       <h1>Привет, {identity.name}</h1>
 
-      <h2>Новый слот</h2>
+      <h2>Новая запись</h2>
       <form className="card" onSubmit={handleCreateSlot}>
         <DateTimePicker value={startsAt} onChange={setStartsAt} />
         <DurationPicker value={duration} onChange={setDuration} />
@@ -131,28 +134,50 @@ export default function MasterView({ identity }: { identity: { name: string } })
           placeholder="Заметка (необязательно)"
           rows={2}
         />
-        <label className="checkbox-row">
-          <input type="checkbox" checked={isPaid} onChange={(e) => setIsPaid(e.target.checked)} />
-          Платная бронь
-        </label>
-        {isPaid && (
-          <input
-            type="number"
-            min={1}
-            value={priceStars}
-            onChange={(e) => setPriceStars(e.target.value)}
-            placeholder="Цена, ⭐"
-            required
-          />
+        <input
+          type="number"
+          min={0}
+          value={depositStars}
+          onChange={(e) => setDepositStars(e.target.value)}
+          placeholder="Депозит, ⭐ (необязательно)"
+        />
+        {PUBLIC_SLOTS_ENABLED && (
+          <label className="checkbox-row">
+            <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+            Личная запись (только по ссылке)
+          </label>
         )}
-        <label className="checkbox-row">
-          <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
-          Личная запись (только по ссылке)
-        </label>
-        <button type="submit" disabled={busy}>Создать слот</button>
+        <button type="submit" disabled={busy}>Подтвердить</button>
       </form>
 
       {error && <p className="error">{error}</p>}
+
+      {newSlotId && (
+        <div className="modal-overlay" onClick={() => setNewSlotId(null)}>
+          <div className="modal-card card" onClick={(e) => e.stopPropagation()}>
+            <h2>Запись создана</h2>
+            <p>Отправьте эту ссылку модели — по ней откроется именно эта запись.</p>
+            <div className="link-row">
+              <input readOnly value={slotShareLink(newSlotId)} onFocus={(e) => e.target.select()} />
+            </div>
+            <div className="modal-actions">
+              <button type="button" onClick={() => handleCopyLink(newSlotId)}>
+                {copiedId === newSlotId ? "Скопировано" : "Копировать"}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => shareToTelegram(slotShareLink(newSlotId), "Запись у мастера")}
+              >
+                Отправить в Telegram
+              </button>
+            </div>
+            <button type="button" className="secondary" onClick={() => setNewSlotId(null)}>
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
 
       <h2>Мои слоты</h2>
       {slots.length === 0 && <p>Пока нет слотов.</p>}
