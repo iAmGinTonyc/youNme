@@ -11,7 +11,7 @@ export function getInitData(): string {
 // told to match rather than following --tg-theme-* automatically.
 export function applyBrandChrome() {
   const webApp = getWebApp();
-  webApp?.setHeaderColor("#0b0b0c");
-  webApp?.setBackgroundColor("#0b0b0c");
-  webApp?.setBottomBarColor("#0b0b0c");
+  webApp?.setHeaderColor("#0b1f3a");
+  webApp?.setBackgroundColor("#0b1f3a");
+  webApp?.setBottomBarColor("#0b1f3a");
 }
