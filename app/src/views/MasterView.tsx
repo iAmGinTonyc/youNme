@@ -128,18 +128,18 @@ export default function MasterView({ identity }: { identity: { name: string } })
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Место (необязательно)"
         />
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Заметка (необязательно)"
-          rows={2}
-        />
         <input
           type="number"
           min={0}
           value={depositStars}
           onChange={(e) => setDepositStars(e.target.value)}
           placeholder="Депозит (необязательно)"
+        />
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Примечание (необязательно)"
+          rows={2}
         />
         {PUBLIC_SLOTS_ENABLED && (
           <label className="checkbox-row">
