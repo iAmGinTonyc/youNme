@@ -4,6 +4,7 @@ import DateTimePicker from "../components/DateTimePicker";
 import DurationPicker from "../components/DurationPicker";
 import SwipeToArchive from "../components/SwipeToArchive";
 import {
+  Booking,
   Slot,
   masterArchiveSlot,
   masterCancelBooking,
@@ -20,6 +21,18 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "отменено",
   completed: "завершено",
 };
+
+// The slot's own status can't tell a client-cancel apart from a
+// master-cancel — both just land on "cancelled" — so refine the label
+// using the booking that caused it, when there is one (a slot the
+// master cancelled directly, with no booking, stays plain "отменено").
+function slotStatusLabel(slot: Slot, pastBooking?: Booking) {
+  if (slot.status === "cancelled") {
+    if (pastBooking?.status === "cancelled_by_model") return "отменено клиентом";
+    if (pastBooking?.status === "cancelled_by_master") return "отменено мастером";
+  }
+  return STATUS_LABEL[slot.status];
+}
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
@@ -187,7 +200,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
         const pastBooking = slot.bookings?.find((b) => b.status !== "confirmed");
         const card = (
           <div className="card">
-            <span className={"status status-" + slot.status}>{STATUS_LABEL[slot.status]}</span>
+            <span className={"status status-" + slot.status}>{slotStatusLabel(slot, pastBooking)}</span>
             {slot.is_paid && <span className="badge-paid">Депозит{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
