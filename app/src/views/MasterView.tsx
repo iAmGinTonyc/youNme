@@ -38,7 +38,7 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
 }
 
-const SHARE_MESSAGE = "Вы приглашены на услугу в качестве модели. Подтвердите условия записи";
+const SHARE_MESSAGE = "Вы приглашены на услугу в качестве модели. Перейдите по ссылке, чтобы подтвердить условия.";
 
 function BookerName({ name, username }: { name: string | number; username?: string | null }) {
   if (!username) return <>{name}</>;
