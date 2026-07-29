@@ -221,7 +221,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
                   Поделиться
                 </button>
                 <button type="button" className="secondary" onClick={() => handleCopyLink(slot.id)}>
-                  {copiedId === slot.id ? "Скопировано" : "Копировать ссылку"}
+                  {copiedId === slot.id ? "Скопировано" : "Копировать"}
                 </button>
               </div>
             )}
