@@ -138,6 +138,37 @@ p {
   margin-bottom: 8px;
 }
 
+.status-open {
+  color: #b88a3b;
+  border-color: rgba(184, 138, 59, 0.4);
+  background: rgba(184, 138, 59, 0.12);
+}
+
+.status-booked,
+.status-confirmed {
+  color: #d6a84f;
+  border-color: rgba(214, 168, 79, 0.4);
+  background: rgba(214, 168, 79, 0.12);
+}
+
+.status-cancelled,
+.status-cancelled_by_model,
+.status-cancelled_by_master {
+  color: #a94a4a;
+  border-color: rgba(169, 74, 74, 0.4);
+  background: rgba(169, 74, 74, 0.12);
+}
+
+.status-completed {
+  color: #4f8068;
+  border-color: rgba(79, 128, 104, 0.4);
+  background: rgba(79, 128, 104, 0.12);
+}
+
+.text-cancelled {
+  color: #a94a4a;
+}
+
 button {
   background: linear-gradient(160deg, var(--gold-bright), var(--gold));
   color: #1a1408;
@@ -482,20 +513,6 @@ input[type="number"]::-webkit-outer-spin-button {
   color: #1a1408;
   font-weight: 600;
   margin-left: 6px;
-  margin-bottom: 8px;
-}
-
-.badge-private {
-  display: inline-block;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 2px 9px;
-  border-radius: 2px;
-  border: 1px solid var(--hairline-strong);
-  background: transparent;
-  color: var(--gold-bright);
-  font-weight: 600;
   margin-bottom: 8px;
 }
 

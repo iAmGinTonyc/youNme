@@ -62,13 +62,13 @@ function withBookings(s: Slot): Slot {
   return { ...s, bookings: slots.find((x) => x.id === s.id)?.bookings ?? [] };
 }
 
-function setBookingStatus(bookingId: string, status: Booking["status"], reopenSlot: boolean) {
+function setBookingStatus(bookingId: string, status: Booking["status"], slotStatus: Slot["status"]) {
   slots = slots.map((s) => {
     const hasBooking = s.bookings?.some((b) => b.id === bookingId);
     if (!hasBooking) return s;
     return {
       ...s,
-      status: reopenSlot ? "open" : "completed",
+      status: slotStatus,
       bookings: s.bookings?.map((b) => (b.id === bookingId ? { ...b, status, cancelled_at: new Date().toISOString() } : b)),
     };
   });
@@ -121,17 +121,17 @@ export const mockApi = {
     return { ok: true as const };
   },
   async masterCancelBooking(bookingId: string) {
-    setBookingStatus(bookingId, "cancelled_by_master", true);
+    setBookingStatus(bookingId, "cancelled_by_master", "open");
     return { ok: true as const };
   },
   async masterMarkNoShow(bookingId: string) {
-    setBookingStatus(bookingId, "no_show", false);
+    setBookingStatus(bookingId, "no_show", "cancelled");
     return { ok: true as const };
   },
   async masterMarkCompleted(bookingId: string) {
     const slot = slots.find((s) => s.bookings?.some((b) => b.id === bookingId));
     if (!slot?.is_paid) {
-      setBookingStatus(bookingId, "completed", false);
+      setBookingStatus(bookingId, "completed", "completed");
       return { ok: true as const };
     }
     slots = slots.map((s) => ({
@@ -178,7 +178,7 @@ export const mockApi = {
     return { ok: true as const };
   },
   async clientCancelBooking(bookingId: string) {
-    setBookingStatus(bookingId, "cancelled_by_model", true);
+    setBookingStatus(bookingId, "cancelled_by_model", "open");
     return { ok: true as const };
   },
 };

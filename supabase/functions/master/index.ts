@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
       if (booking.status !== "confirmed") return json({ error: "booking_not_active" }, 409);
 
       await supabase.from("bookings").update({ status: "no_show" }).eq("id", booking_id);
-      await supabase.from("slots").update({ status: "completed" }).eq("id", booking.slot_id);
+      await supabase.from("slots").update({ status: "cancelled" }).eq("id", booking.slot_id);
       await logEvent({ slot_id: booking.slot_id, booking_id, actor_telegram_id: masterId, action: "booking_marked_no_show" });
 
       const slotInfo = booking.slots as unknown as { is_paid: boolean; price_stars: number | null };

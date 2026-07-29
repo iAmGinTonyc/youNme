@@ -24,10 +24,12 @@ const STATUS_LABEL: Record<string, string> = {
 const BOOKING_STATUS_LABEL: Record<string, string> = {
   confirmed: "подтверждено",
   cancelled_by_model: "отменено клиентом",
-  cancelled_by_master: "отменено вами",
+  cancelled_by_master: "отменено мастером",
   no_show: "неявка",
   completed: "завершено",
 };
+
+const CANCELLED_BOOKING_STATUSES = new Set(["cancelled_by_model", "cancelled_by_master"]);
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
@@ -186,8 +188,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
         const pastBooking = slot.bookings?.find((b) => b.status !== "confirmed");
         const card = (
           <div className="card">
-            <span className="status">{STATUS_LABEL[slot.status]}</span>
-            {slot.is_private && <span className="badge-private">Личная запись</span>}
+            <span className={"status status-" + slot.status}>{STATUS_LABEL[slot.status]}</span>
             {slot.is_paid && <span className="badge-paid">Депозит{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
             <time>{formatDateTime(slot.starts_at)}</time>
             <div className="meta">
@@ -201,7 +202,10 @@ export default function MasterView({ identity }: { identity: { name: string } })
             )}
             {pastBooking && (
               <div className="meta">
-                {pastBooking.model_name ?? pastBooking.model_telegram_id} — {BOOKING_STATUS_LABEL[pastBooking.status] ?? pastBooking.status}
+                {pastBooking.model_name ?? pastBooking.model_telegram_id} —{" "}
+                <span className={CANCELLED_BOOKING_STATUSES.has(pastBooking.status) ? "text-cancelled" : undefined}>
+                  {BOOKING_STATUS_LABEL[pastBooking.status] ?? pastBooking.status}
+                </span>
                 {pastBooking.cancel_reason ? `: ${pastBooking.cancel_reason}` : ""}
               </div>
             )}
@@ -210,10 +214,15 @@ export default function MasterView({ identity }: { identity: { name: string } })
             )}
 
             {slot.status === "open" && slot.is_private && (
-              <div className="link-row">
-                <input readOnly value={slotShareLink(slot.id)} onFocus={(e) => e.target.select()} />
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  onClick={() => shareToTelegram(slotShareLink(slot.id), "Запись у мастера")}
+                >
+                  Поделиться
+                </button>
                 <button type="button" className="secondary" onClick={() => handleCopyLink(slot.id)}>
-                  {copiedId === slot.id ? "Скопировано" : "Копировать"}
+                  {copiedId === slot.id ? "Скопировано" : "Копировать ссылку"}
                 </button>
               </div>
             )}

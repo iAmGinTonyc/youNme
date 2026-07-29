@@ -4,7 +4,7 @@ import { Booking, Slot, clientBookSlot, clientCancelBooking, clientConfirmComple
 
 const STATUS_LABEL: Record<string, string> = {
   confirmed: "подтверждено",
-  cancelled_by_model: "отменено вами",
+  cancelled_by_model: "отменено клиентом",
   cancelled_by_master: "отменено мастером",
   no_show: "неявка",
   completed: "завершено",
@@ -56,7 +56,7 @@ export default function ClientView({ identity }: { identity: { name: string } })
       {myBookings.length === 0 && <p>Пока нет броней.</p>}
       {myBookings.map((booking) => (
         <div className="card" key={booking.id}>
-          <span className="status">{STATUS_LABEL[booking.status] ?? booking.status}</span>
+          <span className={"status status-" + booking.status}>{STATUS_LABEL[booking.status] ?? booking.status}</span>
           {booking.slots?.is_paid && (
             <span className="badge-paid">Депозит{booking.slots.price_stars ? ` · ${booking.slots.price_stars}` : ""}</span>
           )}
@@ -89,7 +89,6 @@ export default function ClientView({ identity }: { identity: { name: string } })
       {openSlots.length === 0 && <p>Пока нет свободных слотов.</p>}
       {openSlots.map((slot) => (
         <div className="card" key={slot.id}>
-          {slot.is_private && <span className="badge-private">Личное предложение</span>}
           {slot.is_paid && <span className="badge-paid">Депозит{slot.price_stars ? ` · ${slot.price_stars}` : ""}</span>}
           <time>{formatDateTime(slot.starts_at)}</time>
           <div className="meta">
