@@ -38,11 +38,7 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
 }
 
-function shareMessage(masterName: string, slot: { starts_at: string; location: string | null }) {
-  const when = formatDateTime(slot.starts_at);
-  const where = slot.location ? ` по адресу ${slot.location}` : "";
-  return `Запись к мастеру ${masterName} на ${when}${where}. Для подтверждения перейдите по ссылке.`;
-}
+const SHARE_MESSAGE = "Вы приглашены на услугу в качестве модели. Подтвердите условия записи";
 
 function BookerName({ name, username }: { name: string | number; username?: string | null }) {
   if (!username) return <>{name}</>;
@@ -189,7 +185,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
               <button
                 type="button"
                 className="secondary"
-                onClick={() => shareToTelegram(slotShareLink(newSlot.id), shareMessage(identity.name, newSlot))}
+                onClick={() => shareToTelegram(slotShareLink(newSlot.id), SHARE_MESSAGE)}
               >
                 Отправить
               </button>
@@ -242,7 +238,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
               <div className="modal-actions">
                 <button
                   type="button"
-                  onClick={() => shareToTelegram(slotShareLink(slot.id), shareMessage(identity.name, slot))}
+                  onClick={() => shareToTelegram(slotShareLink(slot.id), SHARE_MESSAGE)}
                 >
                   Поделиться
                 </button>
