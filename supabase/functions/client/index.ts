@@ -150,7 +150,11 @@ Deno.serve(async (req) => {
         cancel_reason: reason ?? null,
         cancelled_at: new Date().toISOString(),
       }).eq("id", booking_id);
-      await supabase.from("slots").update({ status: "open" }).eq("id", booking.slot_id);
+      // Unlike a master-initiated cancel, the slot does NOT reopen for
+      // rebooking automatically — the master decides whether to offer
+      // that time again (by creating a new slot), rather than it
+      // silently becoming available again right after a client backs out.
+      await supabase.from("slots").update({ status: "cancelled" }).eq("id", booking.slot_id);
       await logEvent({
         slot_id: booking.slot_id,
         booking_id,

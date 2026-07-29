@@ -178,7 +178,7 @@ export const mockApi = {
     return { ok: true as const };
   },
   async clientCancelBooking(bookingId: string) {
-    setBookingStatus(bookingId, "cancelled_by_model", "open");
+    setBookingStatus(bookingId, "cancelled_by_model", "cancelled");
     return { ok: true as const };
   },
 };
