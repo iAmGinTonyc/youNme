@@ -21,10 +21,12 @@
 
 html, body {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  width: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--ivory);
   background-color: var(--ink);
@@ -67,6 +69,23 @@ h2 {
 p {
   color: var(--ivory-dim);
   line-height: 1.5;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-header button {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .card {

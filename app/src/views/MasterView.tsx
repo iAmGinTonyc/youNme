@@ -38,6 +38,12 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function shareMessage(masterName: string, slot: { starts_at: string; location: string | null }) {
+  const when = formatDateTime(slot.starts_at);
+  const where = slot.location ? ` по адресу ${slot.location}` : "";
+  return `Запись к мастеру ${masterName} на ${when}${where}. Для подтверждения перейдите по ссылке.`;
+}
+
 function BookerName({ name, username }: { name: string | number; username?: string | null }) {
   if (!username) return <>{name}</>;
   return (
@@ -69,18 +75,20 @@ export default function MasterView({ identity }: { identity: { name: string } })
   const [depositStars, setDepositStars] = useState("");
   const [isPrivate, setIsPrivate] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [newSlotId, setNewSlotId] = useState<string | null>(null);
+  const [newSlot, setNewSlot] = useState<Slot | null>(null);
+  const [archiveView, setArchiveView] = useState(false);
 
   const initData = getInitData();
 
-  async function refresh() {
-    const { slots } = await masterList(initData);
+  async function refresh(archived = archiveView) {
+    const { slots } = await masterList(initData, archived);
     setSlots(slots);
   }
 
   useEffect(() => {
-    refresh().catch((e) => setError(e.message));
-  }, []);
+    refresh(archiveView).catch((e) => setError(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [archiveView]);
 
   async function withBusy(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -113,7 +121,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
       setLocation("");
       setNote("");
       setDepositStars("");
-      setNewSlotId(slot.id);
+      setNewSlot(slot);
     });
   }
 
@@ -166,35 +174,40 @@ export default function MasterView({ identity }: { identity: { name: string } })
 
       {error && <p className="error">{error}</p>}
 
-      {newSlotId && (
-        <div className="modal-overlay" onClick={() => setNewSlotId(null)}>
+      {newSlot && (
+        <div className="modal-overlay" onClick={() => setNewSlot(null)}>
           <div className="modal-card card" onClick={(e) => e.stopPropagation()}>
             <h2>Запись создана</h2>
             <p>Отправьте эту ссылку модели — по ней откроется именно эта запись.</p>
             <div className="link-row">
-              <input readOnly value={slotShareLink(newSlotId)} onFocus={(e) => e.target.select()} />
+              <input readOnly value={slotShareLink(newSlot.id)} onFocus={(e) => e.target.select()} />
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={() => handleCopyLink(newSlotId)}>
-                {copiedId === newSlotId ? "Скопировано" : "Копировать"}
+              <button type="button" onClick={() => handleCopyLink(newSlot.id)}>
+                {copiedId === newSlot.id ? "Скопировано" : "Копировать"}
               </button>
               <button
                 type="button"
                 className="secondary"
-                onClick={() => shareToTelegram(slotShareLink(newSlotId), "Запись у мастера")}
+                onClick={() => shareToTelegram(slotShareLink(newSlot.id), shareMessage(identity.name, newSlot))}
               >
-                Отправить в Telegram
+                Отправить
               </button>
             </div>
-            <button type="button" className="secondary" onClick={() => setNewSlotId(null)}>
+            <button type="button" className="secondary" onClick={() => setNewSlot(null)}>
               Закрыть
             </button>
           </div>
         </div>
       )}
 
-      <h2>Мои слоты</h2>
-      {slots.length === 0 && <p>Пока нет слотов.</p>}
+      <div className="section-header">
+        <h2>Мои слоты</h2>
+        <button type="button" className="secondary" onClick={() => setArchiveView((v) => !v)}>
+          {archiveView ? "Выйти из архива" : "Архив"}
+        </button>
+      </div>
+      {slots.length === 0 && <p>{archiveView ? "В архиве пока пусто." : "Пока нет слотов."}</p>}
       {slots.map((slot) => {
         const activeBooking = slot.bookings?.find((b) => b.status === "confirmed");
         const pastBooking = slot.bookings?.find((b) => b.status !== "confirmed");
@@ -229,7 +242,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
               <div className="modal-actions">
                 <button
                   type="button"
-                  onClick={() => shareToTelegram(slotShareLink(slot.id), "Запись у мастера")}
+                  onClick={() => shareToTelegram(slotShareLink(slot.id), shareMessage(identity.name, slot))}
                 >
                   Поделиться
                 </button>
@@ -264,7 +277,7 @@ export default function MasterView({ identity }: { identity: { name: string } })
           </div>
         );
 
-        if (slot.status === "cancelled") {
+        if (!archiveView && (slot.status === "cancelled" || slot.status === "completed")) {
           return (
             <SwipeToArchive key={slot.id} disabled={busy} onArchive={() => withBusy(() => masterArchiveSlot(initData, slot.id))}>
               {card}

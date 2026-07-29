@@ -42,12 +42,14 @@ Deno.serve(async (req) => {
 
   switch (action) {
     case "list": {
-      const { data: slots, error } = await supabase
+      const { archived } = payload ?? {};
+      let query = supabase
         .from("slots")
         .select("*, bookings(*)")
         .eq("master_id", masterId)
-        .is("archived_at", null)
         .order("starts_at", { ascending: true });
+      query = archived ? query.not("archived_at", "is", null) : query.is("archived_at", null);
+      const { data: slots, error } = await query;
       if (error) return json({ error: error.message }, 500);
       return json({ slots });
     }
@@ -97,10 +99,11 @@ Deno.serve(async (req) => {
     }
 
     case "archive_slot": {
-      // Archiving only hides a cancelled slot from the default list —
-      // the row (and its event log) stays in the database. Deleting it
-      // outright would undercut the whole point of the app: turning an
-      // agreement into a fact both sides can still point back to.
+      // Archiving only hides a finished (cancelled or completed) slot
+      // from the default list — the row (and its event log) stays in
+      // the database. Deleting it outright would undercut the whole
+      // point of the app: turning an agreement into a fact both sides
+      // can still point back to.
       const { slot_id } = payload ?? {};
       const { data: slot } = await supabase
         .from("slots")
@@ -109,8 +112,8 @@ Deno.serve(async (req) => {
         .eq("master_id", masterId)
         .maybeSingle();
       if (!slot) return json({ error: "not_found" }, 404);
-      if (slot.status !== "cancelled") {
-        return json({ error: "only a cancelled slot can be archived" }, 409);
+      if (slot.status !== "cancelled" && slot.status !== "completed") {
+        return json({ error: "only a cancelled or completed slot can be archived" }, 409);
       }
       await supabase.from("slots").update({ archived_at: new Date().toISOString() }).eq("id", slot_id);
       await logEvent({ slot_id, actor_telegram_id: masterId, action: "slot_archived" });

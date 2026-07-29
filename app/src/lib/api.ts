@@ -63,9 +63,9 @@ export function verify(initData: string) {
   return callFunction<{ telegram_id: number; name: string; role: "master" | "model" }>("verify", { initData });
 }
 
-export function masterList(initData: string) {
-  if (import.meta.env.DEV && mockActive) return mockApi.masterList();
-  return callFunction<{ slots: Slot[] }>("master", { initData, action: "list" });
+export function masterList(initData: string, archived = false) {
+  if (import.meta.env.DEV && mockActive) return mockApi.masterList(archived);
+  return callFunction<{ slots: Slot[] }>("master", { initData, action: "list", payload: { archived } });
 }
 
 export function masterCreateSlot(

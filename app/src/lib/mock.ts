@@ -95,8 +95,8 @@ export const mockIdentity = {
 };
 
 export const mockApi = {
-  async masterList() {
-    return { slots: slots.filter((s) => !s.archived_at).map(withBookings) };
+  async masterList(archived = false) {
+    return { slots: slots.filter((s) => Boolean(s.archived_at) === archived).map(withBookings) };
   },
   async masterCreateSlot(payload: {
     starts_at: string; duration_minutes: number; location?: string; note?: string;
