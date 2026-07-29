@@ -6,6 +6,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyInitData } from "../_shared/verifyInitData.ts";
 import { handleOptions, json } from "../_shared/http.ts";
 import { finalizeIfBothConfirmed } from "../_shared/finalizeBooking.ts";
+import { callTelegramApi } from "../_shared/telegram.ts";
+import { formatRuDateTime } from "../_shared/formatDate.ts";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const supabase = createClient(
@@ -109,6 +111,13 @@ Deno.serve(async (req) => {
       }
 
       await logEvent({ slot_id, booking_id: booking.id, actor_telegram_id: user.id, action: "booking_created" });
+
+      const { data: master } = await supabase.from("masters").select("name").eq("telegram_id", claimed.master_id).maybeSingle();
+      await callTelegramApi(BOT_TOKEN, "sendMessage", {
+        chat_id: user.id,
+        text: `Вы записаны к мастеру ${master?.name ?? ""} на ${formatRuDateTime(claimed.starts_at)}`,
+      }).catch(() => {});
+
       return json({ booking });
     }
 

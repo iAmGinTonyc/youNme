@@ -31,17 +31,22 @@ Telegram Mini App для записи: мастер (бьюти/фото и т.�
 - Edge Functions:
   - `verify` — проверяет initData, возвращает роль (master/model).
   - `master` — все действия мастера (list/create_slot/cancel_slot/archive_slot/
-    cancel_booking/mark_no_show/mark_completed), один файл, action-роутинг.
-  - `client` — все действия модели (list/book_slot/create_invoice/confirm_completed/
-    cancel_booking), тоже один файл.
+    cancel_booking/mark_no_show/mark_completed), один файл, action-роутинг. `list`
+    принимает `{archived: boolean}` — false (default) обычный список, true — архив.
+  - `client` — все действия модели (list/book_slot/confirm_completed/cancel_booking),
+    тоже один файл. `create_invoice` убран вместе со всей Stars-механикой (см. ниже).
   - `telegram-webhook` — принимает апдейты от Telegram: `/start`, `/app`, диплинки
-    `/start slot_<id>`, `pre_checkout_query`, `successful_payment`.
-- **Критично**: `telegram-webhook` обязан деплоиться с `--no-verify-jwt` (Telegram не
-  шлёт Supabase-авторизацию, иначе платформенный gateway режет всё 401 ещё до нашего
-  кода — пользователь видит "bot did not respond in time"). `master` и `client`,
-  наоборот, ДОЛЖНЫ оставаться с проверкой JWT (наш фронтенд шлёт anon key). Это уже
-  один раз случайно сломали одной командой деплоя на все три функции — держать
-  раздельно.
+    `/start slot_<id>`. Обработка платежей (`pre_checkout_query`/`successful_payment`)
+    убрана вместе со Stars.
+  - `send-reminders` — шлёт напоминание модели и мастеру за 3 часа до начала сеанса.
+    Не вызывается фронтендом — дёргается по расписанию через pg_cron (см. "Напоминания
+    и уведомления" ниже).
+- **Критично**: `telegram-webhook` и `send-reminders` обязаны деплоиться с
+  `--no-verify-jwt` (их вызывает не наш фронтенд — Telegram и, соответственно, Postgres
+  — ни тот, ни другой не шлют Supabase-авторизацию, иначе платформенный gateway режет
+  всё 401 ещё до нашего кода). `master` и `client`, наоборот, ДОЛЖНЫ оставаться с
+  проверкой JWT (наш фронтенд шлёт anon key). Это уже один раз случайно сломали одной
+  командой деплоя на все функции разом — держать раздельно.
 - RLS включён на всех таблицах, но без единой policy (anon ничего не может напрямую).
   Все обращения — через Edge Functions с service-role ключом, который Supabase сам
   прокидывает в `SUPABASE_SERVICE_ROLE_KEY`. Авторизация — независимая проверка
@@ -142,6 +147,28 @@ Supabase SQL Editor. Если начинается новая миграция �
 - Вывод звёзд в деньги — только через Fragment (fragment.com), кнопка в профиле бота
   → "Manage Bot" → "Balance" → "Withdraw" (доступно только тому аккаунту, что создавал
   бота в BotFather).
+
+## Напоминания и уведомления
+
+- **При бронировании** (`client` функция, `book_slot`) модели сразу приходит сообщение
+  от бота: "Вы записаны к мастеру {имя} на {дата}" (`formatRuDateTime` — длинный русский
+  формат "31 июля 2026 г., 08:40", не совпадает с сокращённым форматом на фронтенде).
+- **За 3 часа до начала** — отдельная Edge Function `send-reminders` шлёт напоминание
+  и модели ("Напоминаем о сеансе у мастера {имя} на {дата}"), и мастеру ("Напоминаем о
+  сеансе с моделью {имя} на {дата}"). Один раз на бронь — колонка `bookings.reminder_sent_at`
+  (миграция 0008) не даёт продублировать.
+- **Как это запускается**: pg_cron (расширения `pg_cron`+`pg_net`, включены на проекте)
+  дёргает `send-reminders` каждые 10 минут через `net.http_post` — см. миграцию
+  `0009_reminder_cron.sql` (в публичном репо секрет заменён на `<CRON_SECRET>`,
+  реальное значение стоит только в БД и в Edge Function secret). Посмотреть/поменять
+  джобу:
+  ```sql
+  select * from cron.job where jobname = 'send-reminders';
+  select * from cron.job_run_details order by start_time desc limit 5; -- логи запусков
+  ```
+- Это первый cron-джоб в проекте — раньше вся логика была строго request-driven
+  (фронтенд или Telegram-вебхук), теперь есть один процесс, который не привязан ни к
+  тому, ни к другому.
 
 ## Не сделано / запланировано
 

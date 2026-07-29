@@ -35,6 +35,15 @@ auto-injects a service-role key into their runtime env as
   `X-Telegram-Bot-Api-Secret-Token` header on incoming webhook calls.
 - `MINI_APP_URL` — the GitHub Pages URL, used to build the "Open app" button
   in bot replies.
+- `CRON_SECRET` — random string, checked against the `x-cron-secret` header
+  on calls to `send-reminders`. That function is invoked on a schedule by
+  Postgres (pg_cron + pg_net), not by our own frontend, so it's deployed
+  with `--no-verify-jwt` and uses this instead of Supabase JWT auth — same
+  pattern as `TELEGRAM_WEBHOOK_SECRET`.
 
 Rotating the bot token means re-running Telegram's `setWebhook` with the new
-token too (the old one stops being valid for that call).
+token too (the old one stops being valid for that call). Rotating
+`CRON_SECRET` means updating both the Edge Function secret AND the
+`x-cron-secret` header baked into the `cron.job` row's SQL — see
+`select * from cron.job where jobname = 'send-reminders';`, update via
+`select cron.alter_job(<jobid>, command := ...);` with the new value.
