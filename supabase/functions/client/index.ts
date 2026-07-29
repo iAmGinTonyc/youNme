@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       const { data: master } = await supabase.from("masters").select("name").eq("telegram_id", claimed.master_id).maybeSingle();
       await callTelegramApi(BOT_TOKEN, "sendMessage", {
         chat_id: user.id,
-        text: `Вы записаны к мастеру ${master?.name ?? ""} на ${formatRuDateTime(claimed.starts_at)}`,
+        text: `Вы записаны${master?.name ? ` к мастеру ${master.name}` : ""} на ${formatRuDateTime(claimed.starts_at)}`,
       }).catch(() => {});
 
       return json({ booking });

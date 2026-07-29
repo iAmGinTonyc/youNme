@@ -50,16 +50,16 @@ Deno.serve(async (req) => {
   for (const booking of bookings) {
     const slot = booking.slots as unknown as { starts_at: string; master_id: number };
     const when = formatRuDateTime(slot.starts_at);
-    const masterName = masterNameById.get(slot.master_id) ?? "";
+    const masterName = masterNameById.get(slot.master_id);
 
     await callTelegramApi(BOT_TOKEN, "sendMessage", {
       chat_id: booking.model_telegram_id,
-      text: `Напоминаем о сеансе у мастера ${masterName} на ${when}`,
+      text: `Напоминаем о сеансе${masterName ? ` у мастера ${masterName}` : ""} на ${when}`,
     }).catch(() => {});
 
     await callTelegramApi(BOT_TOKEN, "sendMessage", {
       chat_id: slot.master_id,
-      text: `Напоминаем о сеансе с моделью ${booking.model_name ?? ""} на ${when}`,
+      text: `Напоминаем о сеансе${booking.model_name ? ` с моделью ${booking.model_name}` : ""} на ${when}`,
     }).catch(() => {});
 
     await supabase.from("bookings").update({ reminder_sent_at: new Date().toISOString() }).eq("id", booking.id);
