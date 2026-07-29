@@ -165,8 +165,20 @@ p {
   background: rgba(79, 128, 104, 0.12);
 }
 
-.text-cancelled {
-  color: #a94a4a;
+.link-name {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--gold-bright);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-name:hover {
+  color: var(--gold);
 }
 
 button {

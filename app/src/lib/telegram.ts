@@ -16,14 +16,22 @@ export function applyBrandChrome() {
   webApp?.setBottomBarColor("#0b1f3a");
 }
 
-// Opens Telegram's native "forward to a chat" sheet for a link, inside the
-// Telegram client if we're running as a Mini App, or a plain new tab in dev.
-export function shareToTelegram(link: string, text: string) {
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+// Opens a t.me link inside the Telegram client if we're running as a Mini
+// App, or a plain new tab in dev.
+export function openTelegramLink(url: string) {
   const webApp = getWebApp();
   if (webApp) {
-    webApp.openTelegramLink(shareUrl);
+    webApp.openTelegramLink(url);
   } else {
-    window.open(shareUrl, "_blank");
+    window.open(url, "_blank");
   }
+}
+
+// Opens Telegram's native "forward to a chat" sheet for a link.
+export function shareToTelegram(link: string, text: string) {
+  openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+}
+
+export function openTelegramProfile(username: string) {
+  openTelegramLink(`https://t.me/${username}`);
 }

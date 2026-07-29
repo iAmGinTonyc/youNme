@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
           slot_id,
           model_telegram_id: user.id,
           model_name: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username,
+          model_username: user.username ?? null,
         })
         .select()
         .single();

@@ -1,5 +1,5 @@
 import { Fragment, FormEvent, useEffect, useState } from "react";
-import { getInitData, shareToTelegram } from "../lib/telegram";
+import { getInitData, openTelegramProfile, shareToTelegram } from "../lib/telegram";
 import DateTimePicker from "../components/DateTimePicker";
 import DurationPicker from "../components/DurationPicker";
 import SwipeToArchive from "../components/SwipeToArchive";
@@ -21,18 +21,17 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "завершено",
 };
 
-const BOOKING_STATUS_LABEL: Record<string, string> = {
-  confirmed: "подтверждено",
-  cancelled_by_model: "отменено клиентом",
-  cancelled_by_master: "отменено мастером",
-  no_show: "неявка",
-  completed: "завершено",
-};
-
-const CANCELLED_BOOKING_STATUSES = new Set(["cancelled_by_model", "cancelled_by_master"]);
-
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function BookerName({ name, username }: { name: string | number; username?: string | null }) {
+  if (!username) return <>{name}</>;
+  return (
+    <button type="button" className="link-name" onClick={() => openTelegramProfile(username)}>
+      {name}
+    </button>
+  );
 }
 
 // Update if the bot is ever renamed in BotFather.
@@ -198,14 +197,14 @@ export default function MasterView({ identity }: { identity: { name: string } })
             {slot.note && <div className="meta">{slot.note}</div>}
 
             {activeBooking && (
-              <div className="meta">Забронировала: {activeBooking.model_name ?? activeBooking.model_telegram_id}</div>
+              <div className="meta">
+                Забронировала:{" "}
+                <BookerName name={activeBooking.model_name ?? activeBooking.model_telegram_id} username={activeBooking.model_username} />
+              </div>
             )}
             {pastBooking && (
               <div className="meta">
-                {pastBooking.model_name ?? pastBooking.model_telegram_id} —{" "}
-                <span className={CANCELLED_BOOKING_STATUSES.has(pastBooking.status) ? "text-cancelled" : undefined}>
-                  {BOOKING_STATUS_LABEL[pastBooking.status] ?? pastBooking.status}
-                </span>
+                <BookerName name={pastBooking.model_name ?? pastBooking.model_telegram_id} username={pastBooking.model_username} />
                 {pastBooking.cancel_reason ? `: ${pastBooking.cancel_reason}` : ""}
               </div>
             )}

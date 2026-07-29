@@ -25,12 +25,12 @@ let slots: Slot[] = [
   {
     id: "s2", master_id: MASTER_ID, starts_at: inHours(50), duration_minutes: 60,
     location: "Студия на Тверской", note: null, status: "booked", is_paid: false, price_stars: null, is_private: false, archived_at: null, created_at: inHours(-5),
-    bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-4) }],
+    bookings: [{ id: "b1", slot_id: "s2", model_telegram_id: 222, model_name: "Алина", model_username: "alina_model", status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-4) }],
   },
   {
     id: "s3", master_id: MASTER_ID, starts_at: inHours(-20), duration_minutes: 60,
     location: null, note: null, status: "completed", is_paid: false, price_stars: null, is_private: false, archived_at: null, created_at: inHours(-40),
-    bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", status: "completed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-39) }],
+    bookings: [{ id: "b2", slot_id: "s3", model_telegram_id: 333, model_name: "Мария", model_username: null, status: "completed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null, master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-39) }],
   },
   {
     id: "s4", master_id: MASTER_ID, starts_at: inHours(-5), duration_minutes: 60,
@@ -46,7 +46,7 @@ let slots: Slot[] = [
     location: "Студия на Тверской", note: null, status: "booked", is_paid: true, price_stars: 150, is_private: false, archived_at: null,
     created_at: inHours(-30),
     bookings: [{
-      id: "b3", slot_id: "s6", model_telegram_id: MODEL_ID, model_name: "Ты", status: "confirmed",
+      id: "b3", slot_id: "s6", model_telegram_id: MODEL_ID, model_name: "Ты", model_username: null, status: "confirmed",
       cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: "mock_charge_1",
       master_confirmed_at: null, client_confirmed_at: null, created_at: inHours(-29),
     }],
@@ -159,7 +159,7 @@ export const mockApi = {
   },
   async clientBookSlot(slotId: string) {
     const booking: Booking = {
-      id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты",
+      id: newId(), slot_id: slotId, model_telegram_id: MODEL_ID, model_name: "Ты", model_username: null,
       status: "confirmed", cancel_reason: null, cancelled_at: null, telegram_payment_charge_id: null,
       master_confirmed_at: null, client_confirmed_at: null,
       created_at: new Date().toISOString(),

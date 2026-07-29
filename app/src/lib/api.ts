@@ -16,6 +16,7 @@ export interface Booking {
   slot_id: string;
   model_telegram_id: number;
   model_name: string | null;
+  model_username: string | null;
   status: BookingStatus;
   cancel_reason: string | null;
   cancelled_at: string | null;
