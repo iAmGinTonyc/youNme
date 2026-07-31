@@ -26,9 +26,20 @@ Deno.serve(async (req) => {
     .eq("telegram_id", user.id)
     .maybeSingle();
 
+  const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "—";
+
+  // Keep masters.name in sync with their live Telegram profile — it's
+  // used in booking/reminder messages sent to the model, who has no
+  // other way to see it. Self-heals on every open instead of relying on
+  // whoever inserted the row via SQL to have set it (or to update it if
+  // the master ever changes their Telegram name).
+  if (master && master.name !== displayName) {
+    await supabase.from("masters").update({ name: displayName }).eq("telegram_id", user.id);
+  }
+
   return json({
     telegram_id: user.id,
-    name: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "—",
+    name: displayName,
     role: master ? "master" : "model",
   }, 200);
 });
